@@ -1,54 +1,241 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MetaClean Pro — Private Image Cleaner</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MetaClean Pro v2.0 — Private Image & Video Metadata Cleaner</title>
+  <meta name="description" content="100% client-side privacy scrubber for images and videos. Strips EXIF, GPS, camera metadata, and QuickTime/MP4 tags without server uploads.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-<header><a class="brand"><span>✦</span> MetaClean <i>PRO</i></a><div class="privacy">🔒 Runs locally</div></header>
-<main>
-<section class="hero">
-<div class="eyebrow">PRIVACY-FIRST IMAGE CLEANER</div>
-<h1>Clean the metadata.<br><em>Keep the image.</em></h1>
-<p>Deep-scan common image metadata, rebuild a fresh file, then verify what remains — entirely in your browser.</p>
-<label class="drop" id="drop"><input id="file" type="file" accept="image/jpeg,image/png,image/webp">
-<div class="upload">↑</div><b>Drop an image here</b><span>or <u>choose a file</u></span><small>JPEG • PNG • WebP</small></label>
-<div class="local">Your file is processed on this device. It is not uploaded to a server.</div>
-</section>
 
-<section id="app" class="hidden">
-<div class="filebar"><img id="thumb"><div><b id="fname"></b><small id="finfo"></small></div><button id="reset">Remove</button></div>
-<div class="toolbar"><div><b>Deep scan</b><span id="scanState">Scanning…</span></div><div class="meter"><i id="meter"></i></div></div>
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <span class="brand-sparkle">✦</span>
+        <span class="brand-name">MetaClean</span>
+        <span class="brand-badge">PRO v2.0</span>
+      </div>
+      <div class="nav-badges">
+        <span class="badge badge-secure" title="Zero network requests during cleaning">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          100% Local / No Uploads
+        </span>
+        <span class="badge badge-media">Images &amp; Videos</span>
+      </div>
+    </div>
+  </header>
 
-<div class="columns">
-<section class="card">
-<div class="head"><div><h2>Metadata detected</h2><p>Common embedded information found before cleaning.</p></div><strong id="count">0</strong></div>
-<div id="before" class="list"><div class="empty">Scanning file…</div></div>
-</section>
-<section class="card clean">
-<div class="shield">✓</div><h2>Clean & verify</h2>
-<p>Creates a new raster image without common EXIF, XMP, IPTC and application metadata.</p>
-<button id="clean">Clean image</button>
-<small>Original file is never modified.</small>
-</section>
-</div>
+  <!-- Live Announcer for Screen Readers -->
+  <div id="srAnnounce" class="sr-only" aria-live="polite"></div>
 
-<section id="result" class="card result hidden">
-<div class="head"><div><h2>Verification</h2><p>We scan the generated file again after cleaning.</p></div><span id="resultBadge"></span></div>
-<div class="verify"><div><b id="removed">—</b><span>detected before</span></div><div class="arrow">→</div><div><b id="remaining">—</b><span>detected after</span></div></div>
-<div id="after" class="list"></div>
-<div class="actions"><button id="download" class="primary">Download cleaned image</button><button id="again">Clean another</button></div>
-</section>
-</section>
+  <main class="main-content">
 
-<section class="how"><h2>What it removes</h2><div class="features">
-<div><b>EXIF</b><span>Camera, lens, dates and other EXIF fields.</span></div>
-<div><b>LOCATION</b><span>GPS coordinates and location fields.</span></div>
-<div><b>XMP / IPTC</b><span>Common editing, author and publishing metadata.</span></div>
-<div><b>APP DATA</b><span>Common JPEG application segments and PNG text metadata.</span></div>
-</div><p class="limit">No browser tool can guarantee removal of every proprietary or steganographic payload. Pixel content is not altered to evade AI detection or provenance systems.</p></section>
-</main>
-<footer>MetaClean Pro <span>Client-side processing • No uploads</span></footer>
-<script src="app.js"></script>
-</body></html>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="pill-badge">PRIVACY-FIRST MEDIA SANITIZER</div>
+      <h1>Scrub private metadata.<br><span class="gradient-text">Protect your media.</span></h1>
+      <p class="hero-subtext">
+        Deep-scan and strip EXIF, GPS, camera models, dates, and QuickTime/MP4 tags.
+        Zero data ever leaves your browser.
+      </p>
+
+      <!-- Dropzone Area -->
+      <div class="drop-wrapper">
+        <label class="drop-zone" id="dropZone" for="fileInput" tabindex="0">
+          <input id="fileInput" type="file" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm">
+          <div class="drop-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <div class="drop-title">Drop images or videos here</div>
+          <div class="drop-hint">or <span class="browse-link">browse files</span> from your device</div>
+          <div class="supported-tags">
+            <span class="tag">JPEG</span>
+            <span class="tag">PNG (32-bit)</span>
+            <span class="tag">WebP</span>
+            <span class="tag tag-video">MP4</span>
+            <span class="tag tag-video">MOV</span>
+            <span class="tag tag-video">WebM</span>
+          </div>
+        </label>
+      </div>
+      <div class="privacy-notice">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        Lossless video scrubbing via in-place ISOBMFF zero-copy patching • Native WebP alpha retention
+      </div>
+    </section>
+
+    <!-- Workspace & Inspection Panel (Hidden by default until file dropped) -->
+    <section id="workspace" class="workspace hidden">
+      
+      <!-- Toolbar & Queue Bar -->
+      <div class="workspace-header">
+        <div class="active-file-info">
+          <div class="media-thumb-box" id="mediaThumbBox">
+            <img id="imageThumb" class="thumb-media" alt="Original media thumbnail">
+            <video id="videoThumb" class="thumb-media hidden" muted loop playsinline></video>
+          </div>
+          <div class="file-text">
+            <div class="file-title-row">
+              <span id="fileName" class="file-name">filename.jpg</span>
+              <span id="fileTypeBadge" class="file-badge">IMAGE</span>
+            </div>
+            <div class="file-meta-row">
+              <span id="fileSize">0 KB</span>
+              <span class="bullet">•</span>
+              <span id="fileDimensions">0 × 0</span>
+              <span class="bullet">•</span>
+              <span id="scanStatus" class="status-scanning">Scanning...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="workspace-actions">
+          <div class="setting-group" id="qualitySettingGroup">
+            <label for="qualitySelect">Image Quality:</label>
+            <select id="qualitySelect" class="clean-select">
+              <option value="0.98">Maximum (98%)</option>
+              <option value="0.95" selected>High (95% Recommended)</option>
+              <option value="0.90">Balanced (90%)</option>
+            </select>
+          </div>
+          <button id="cleanCurrentBtn" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            Clean This File
+          </button>
+          <button id="resetBtn" class="btn btn-ghost" title="Clear and pick another">Clear</button>
+        </div>
+      </div>
+
+      <!-- Batch Queue List (Shows when multiple files are loaded) -->
+      <div id="batchQueueCard" class="batch-card hidden">
+        <div class="batch-header">
+          <div>
+            <h3>Batch Processing Queue (<span id="batchCount">0</span> files)</h3>
+            <p>Process multiple photos and videos at once.</p>
+          </div>
+          <div class="batch-actions">
+            <button id="cleanAllBtn" class="btn btn-secondary btn-sm">Clean All</button>
+            <button id="downloadZipBtn" class="btn btn-accent btn-sm hidden">Download ZIP</button>
+          </div>
+        </div>
+        <div id="batchItemsList" class="batch-items"></div>
+      </div>
+
+      <!-- Inspection & Comparison Grid -->
+      <div class="inspector-grid">
+        
+        <!-- Left: Metadata Detected -->
+        <div class="card card-detected">
+          <div class="card-header">
+            <div>
+              <h2>Detected Metadata</h2>
+              <p>Sensitive attributes discovered in file headers.</p>
+            </div>
+            <div class="count-pill danger" id="detectedCount">0</div>
+          </div>
+          
+          <div id="tagsList" class="tags-container">
+            <div class="empty-state">No metadata scanned yet.</div>
+          </div>
+        </div>
+
+        <!-- Right: Verification & Output -->
+        <div class="card card-verification">
+          <div class="card-header">
+            <div>
+              <h2>Sanitization &amp; Verification</h2>
+              <p>Post-clean inspection of the rebuilt file.</p>
+            </div>
+            <div class="count-pill neutral" id="verificationBadge">Ready</div>
+          </div>
+
+          <div class="verification-body">
+            <!-- Stats -->
+            <div class="stat-boxes">
+              <div class="stat-box">
+                <span class="stat-num text-danger" id="statBefore">0</span>
+                <span class="stat-label">Tags Detected</span>
+              </div>
+              <div class="stat-arrow">→</div>
+              <div class="stat-box">
+                <span class="stat-num text-success" id="statAfter">—</span>
+                <span class="stat-label">Tags Remaining</span>
+              </div>
+            </div>
+
+            <!-- Preview comparison -->
+            <div id="previewContainer" class="preview-box">
+              <div class="preview-badge">Sanitized Output Preview</div>
+              <img id="cleanImagePreview" class="preview-media hidden" alt="Cleaned preview">
+              <video id="cleanVideoPreview" class="preview-media hidden" controls playsinline></video>
+              <div id="previewPlaceholder" class="preview-placeholder">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>Click "Clean This File" to generate sanitized media</span>
+              </div>
+            </div>
+
+            <!-- Download Button -->
+            <div class="download-section">
+              <button id="downloadBtn" class="btn btn-success btn-lg w-full" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download Cleaned File
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- Capabilities & Privacy Guarantees Section -->
+    <section class="capabilities">
+      <h2>How MetaClean Pro v2.0 Sanitizes Your Media</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📍</div>
+          <h3>GPS &amp; Geolocation</h3>
+          <p>Extracts and strips exact latitude, longitude, and altitude embedded by smartphones and drones.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📷</div>
+          <h3>Camera &amp; Lens Hardware</h3>
+          <p>Removes device serial numbers, camera model, lens specifications, and internal sensor details.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎬</div>
+          <h3>Lossless Video Scrubbing</h3>
+          <p>In-place ISOBMFF box rewriting zeros creation timestamps and wipes <code>udta</code>/<code>meta</code> tags without transcoding.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3>Wide-Gamut &amp; Alpha Retention</h3>
+          <p>Preserves WebP and PNG transparency without conversion bugs. Respects Display P3 and sRGB color profiles.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div>MetaClean Pro v2.0 • 100% Client-Side Image &amp; Video Privacy Scrubber</div>
+      <div class="footer-note">All processing takes place in your local browser sandbox.</div>
+    </div>
+  </footer>
+
+  <!-- Main Application Script -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
