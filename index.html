@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
   <!-- EXIF.js for deep extraction mode -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
 </head>
@@ -16,6 +16,44 @@
 
   <!-- Cyber Scanline Overlay (Active in Extraction Mode) -->
   <div class="cyber-scanlines" aria-hidden="true"></div>
+
+  <!-- ====================================================================
+       HACKER TRANSITION OVERLAY (Cinematic Coding Screen Animation)
+       ==================================================================== -->
+  <div id="hackerTransitionOverlay" class="hacker-overlay hidden" aria-hidden="true">
+    <div class="hacker-terminal-window">
+      <div class="hacker-terminal-topbar">
+        <div class="terminal-dots">
+          <span class="dot dot-red"></span>
+          <span class="dot dot-yellow"></span>
+          <span class="dot dot-green"></span>
+        </div>
+        <div class="terminal-title">
+          <span class="blink-dot">●</span> SYSTEM_OVERRIDE // INITIATING_DEEP_EXTRACTION
+        </div>
+        <button id="skipAnimBtn" class="skip-btn" title="Skip animation">SKIP [ESC]</button>
+      </div>
+
+      <div class="hacker-terminal-body">
+        <!-- Matrix Digital Rain Canvas Background -->
+        <canvas id="matrixCanvas" class="matrix-canvas"></canvas>
+
+        <!-- Code & Log Terminal Stream -->
+        <div class="hacker-log-stream" id="hackerLogStream"></div>
+
+        <!-- Progress Bar & Status Counter -->
+        <div class="hacker-progress-container">
+          <div class="hacker-progress-bar">
+            <div class="hacker-progress-fill" id="hackerProgressFill"></div>
+          </div>
+          <div class="hacker-progress-info">
+            <span id="hackerProgressStatus">INITIALIZING CORE SYSTEM...</span>
+            <span id="hackerProgressText">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Top Navbar -->
   <header class="navbar">

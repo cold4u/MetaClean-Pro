@@ -1,5 +1,5 @@
 /**
- * MetaClean Pro v2.0 - Controller with Cyber Extraction Mode & PhotoMeta Integration
+ * MetaClean Pro v2.0 - Controller with Cinematic Hacker Coding Transition & PhotoMeta Integration
  * Seamlessly manages Dual Mode (Sanitizer vs Cyber Extractor), file queues, and memory lifecycle.
  */
 
@@ -21,6 +21,15 @@ const heroTitle = $('#heroTitle');
 const heroSubtext = $('#heroSubtext');
 const dropTitle = $('#dropTitle');
 const dropHint = $('#dropHint');
+
+// Hacker Coding Animation Overlay Elements
+const hackerTransitionOverlay = $('#hackerTransitionOverlay');
+const matrixCanvas = $('#matrixCanvas');
+const hackerLogStream = $('#hackerLogStream');
+const hackerProgressFill = $('#hackerProgressFill');
+const hackerProgressStatus = $('#hackerProgressStatus');
+const hackerProgressText = $('#hackerProgressText');
+const skipAnimBtn = $('#skipAnimBtn');
 
 // Global Drop & Input
 const dropZone = $('#dropZone');
@@ -96,6 +105,9 @@ let currentMode = localStorage.getItem('metaclean_mode') || 'cleaner'; // 'clean
 let fileQueue = [];
 let currentIndex = -1;
 let currentRawTags = [];
+let matrixAnimationId = null;
+let isAnimationRunning = false;
+let audioCtx = null;
 const objectUrls = new Set();
 
 /**
@@ -133,6 +145,169 @@ function escapeHtml(str) {
 }
 
 /* ==========================================================================
+   WEB AUDIO API - SYNTHETIC CYBER TERMINAL SOUND FX (Pure JS, Zero Files)
+   ========================================================================== */
+
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) {
+      audioCtx = new AudioContextClass();
+    }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playCyberChirp(freq = 1200, duration = 0.04) {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, ctx.currentTime + duration);
+    gain.gain.setValueAtTime(0.04, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration);
+  } catch (e) {}
+}
+
+function playAccessGrantedChime() {
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + i * 0.08);
+      gain.gain.setValueAtTime(0.08, now + i * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.08);
+      osc.stop(now + i * 0.08 + 0.3);
+    });
+  } catch (e) {}
+}
+
+/* ==========================================================================
+   CINEMATIC HACKER CODING TRANSITION ANIMATION
+   ========================================================================== */
+
+const HACKER_LOG_MESSAGES = [
+  { text: '> [INIT] KERNEL INTERRUPT: ROOT_PRIVILEGES_ACQUIRED', type: 'cmd', status: 'OVERRIDE KERNEL...', progress: 10 },
+  { text: '> [ALLOC] BUFFER 0x7FFF9A2C: MOUNTING ISOBMFF / TIFF REGISTERS', type: '', status: 'INITIALIZING MEMORY BUFFER...', progress: 25 },
+  { text: '> [SECURITY] BYPASSING REVERSE PROXY // ZERO NETWORK EMISSION CONFIRMED', type: 'warn', status: 'VERIFYING AIRGAP SANDBOX...', progress: 40 },
+  { text: '> [MODULE] INJECTING C2PA & DEEP EXIF TELEMETRY HOOKS...', type: '', status: 'LOADING TELEMETRY HOOKS...', progress: 55 },
+  { text: '> [GPS_SATELLITE] MAPPING WGS-84 GEOLOCATION ENGINE [LOCKING SATELLITES]...', type: 'cmd', status: 'DECODING GPS RATIONALS...', progress: 70 },
+  { text: '> [DECRYPT] UNPACKING APERTURE, SHUTTER & SENSOR REGISTERS...', type: '', status: 'EXTRACTING HARDWARE DOSSIER...', progress: 85 },
+  { text: '> [SURVEILLANCE] OSINT METADATA REGISTERS: 100% UNLOCKED', type: 'warn', status: 'COMPILING TELEMETRY...', progress: 95 },
+  { text: '> [SYSTEM] ACCESS GRANTED // EXTRACTION_MODE ACTIVATED', type: 'success', status: 'ACCESS GRANTED // READY', progress: 100 }
+];
+
+function startMatrixRain() {
+  const canvas = matrixCanvas;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.offsetWidth;
+  canvas.height = canvas.parentElement.offsetHeight;
+
+  const letters = '0123456789ABCDEFｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ';
+  const fontSize = 14;
+  const columns = Math.floor(canvas.width / fontSize);
+  const drops = Array(columns).fill(1);
+
+  function draw() {
+    ctx.fillStyle = 'rgba(3, 8, 14, 0.12)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#00ff88';
+    ctx.font = `${fontSize}px JetBrains Mono, monospace`;
+
+    for (let i = 0; i < drops.length; i++) {
+      const text = letters.charAt(Math.floor(Math.random() * letters.length));
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+    matrixAnimationId = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function stopMatrixRain() {
+  if (matrixAnimationId) {
+    cancelAnimationFrame(matrixAnimationId);
+    matrixAnimationId = null;
+  }
+}
+
+async function triggerHackerCodingAnimation() {
+  if (isAnimationRunning) return;
+  isAnimationRunning = true;
+
+  hackerTransitionOverlay.classList.remove('hidden', 'fade-out');
+  hackerLogStream.innerHTML = '';
+  hackerProgressFill.style.width = '0%';
+  hackerProgressText.textContent = '0%';
+  hackerProgressStatus.textContent = 'INITIALIZING OVERRIDE...';
+
+  startMatrixRain();
+
+  let interrupted = false;
+  const onSkip = () => { interrupted = true; };
+  skipAnimBtn.onclick = onSkip;
+  const escHandler = (e) => { if (e.key === 'Escape') interrupted = true; };
+  window.addEventListener('keydown', escHandler);
+
+  for (let i = 0; i < HACKER_LOG_MESSAGES.length; i++) {
+    if (interrupted) break;
+
+    const item = HACKER_LOG_MESSAGES[i];
+    const line = document.createElement('div');
+    line.className = `hacker-log-line ${item.type}`;
+    line.textContent = item.text;
+    hackerLogStream.appendChild(line);
+    hackerLogStream.scrollTop = hackerLogStream.scrollHeight;
+
+    hackerProgressFill.style.width = `${item.progress}%`;
+    hackerProgressText.textContent = `${item.progress}%`;
+    hackerProgressStatus.textContent = item.status;
+
+    playCyberChirp(1000 + i * 150, 0.035);
+
+    // Fast cinematic pacing: ~160ms per step
+    await new Promise((r) => setTimeout(r, 160));
+  }
+
+  playAccessGrantedChime();
+  window.removeEventListener('keydown', escHandler);
+
+  await new Promise((r) => setTimeout(r, 220));
+
+  hackerTransitionOverlay.classList.add('fade-out');
+  setMode('extraction');
+
+  setTimeout(() => {
+    hackerTransitionOverlay.classList.add('hidden');
+    hackerTransitionOverlay.classList.remove('fade-out');
+    stopMatrixRain();
+    isAnimationRunning = false;
+  }, 350);
+}
+
+/* ==========================================================================
    MODE SWITCHING LOGIC (Cleaner vs Cyber Extractor)
    ========================================================================== */
 
@@ -163,21 +338,30 @@ function setMode(mode) {
     announce('Cleaner Mode activated: Privacy sanitizer active');
   }
 
-  // If a file is already loaded, re-render appropriate workspace
   if (currentIndex !== -1 && fileQueue[currentIndex]) {
     switchWorkspaceView();
   }
 }
 
 modeToggleBtn.addEventListener('click', () => {
-  setMode(currentMode === 'cleaner' ? 'extraction' : 'cleaner');
+  if (currentMode === 'cleaner') {
+    // Play full hacker coding animation before landing in Extraction Mode!
+    triggerHackerCodingAnimation();
+  } else {
+    // Smooth instant switch back to Cleaner Mode
+    setMode('cleaner');
+  }
 });
 
 // Keyboard shortcut: Ctrl + E or Cmd + E toggles Extraction Mode
 window.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
     e.preventDefault();
-    setMode(currentMode === 'cleaner' ? 'extraction' : 'cleaner');
+    if (currentMode === 'cleaner') {
+      triggerHackerCodingAnimation();
+    } else {
+      setMode('cleaner');
+    }
   }
 });
 
@@ -358,7 +542,7 @@ async function selectFile(index) {
     console.error(e);
   }
 
-  // 4. Run PhotoMeta Deep Extractor (EXIF.js + GPS coordinate calculation)
+  // 4. Run PhotoMeta Deep Extractor
   await runPhotoMetaExtraction(item, initialUrl);
 
   // 5. Dimensions calculation
@@ -411,7 +595,6 @@ async function runPhotoMetaExtraction(item, url) {
         const tags = window.EXIF.getAllTags(this);
         if (tags) {
           item.exifTags = tags;
-          // Extract GPS if not already extracted
           const lat = window.EXIF.getTag(this, 'GPSLatitude');
           const lon = window.EXIF.getTag(this, 'GPSLongitude');
           const latRef = window.EXIF.getTag(this, 'GPSLatitudeRef') || 'N';
@@ -423,7 +606,6 @@ async function runPhotoMetaExtraction(item, url) {
             item.gps = { lat: latD, lon: lonD, alt: alt ? dmsToNum(alt) : null };
           }
 
-          // Add EXIF.js tags to raw list
           Object.keys(tags).forEach((k) => {
             if (typeof tags[k] !== 'function') {
               currentRawTags.push({ tag: `EXIF // ${k}`, value: valToStr(tags[k]) });
@@ -435,7 +617,6 @@ async function runPhotoMetaExtraction(item, url) {
     });
   }
 
-  // Render Cyber Extraction Sections
   renderCyberDossier(item);
 }
 
@@ -511,12 +692,10 @@ function renderCyberDossier(item) {
     cameraOpticsSection.classList.add('hidden');
   }
 
-  // Alert if no metadata found
   const totalTags = currentRawTags.length;
   extractStatusText.textContent = `METADATA DUMP COMPLETE // ${totalTags} TAGS PARSED`;
   extractNoExifMsg.classList.toggle('hidden', totalTags > 0);
 
-  // Render Raw Terminal Table
   renderRawTable(currentRawTags);
 }
 
@@ -527,7 +706,6 @@ function renderRawTable(list) {
     return;
   }
 
-  // Deduplicate and sort
   const map = new Map();
   list.forEach((item) => {
     if (!map.has(item.tag)) map.set(item.tag, item.value);
@@ -545,7 +723,6 @@ function renderRawTable(list) {
     .join('');
 }
 
-// Live Search Filter for Raw Terminal Table
 rawSearchInput.addEventListener('input', (e) => {
   const query = e.target.value.toLowerCase().trim();
   const rows = rawTableBody.querySelectorAll('tr');
@@ -555,14 +732,12 @@ rawSearchInput.addEventListener('input', (e) => {
   });
 });
 
-// Quick Action: Scrub This File (from extraction mode)
 extractCleanBtn.addEventListener('click', async () => {
   if (currentIndex === -1) return;
   setMode('cleaner');
   await cleanItem(fileQueue[currentIndex]);
 });
 
-// Quick Action: Copy Extracted Metadata as JSON
 copyJsonBtn.addEventListener('click', () => {
   if (currentRawTags.length === 0) return;
   const jsonReport = {};
