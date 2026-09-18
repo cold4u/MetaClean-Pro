@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MetaClean Pro v2.0 — Private Media Sanitizer &amp; Cyber Extractor</title>
   <meta name="description" content="100% client-side privacy scrubber and deep metadata extraction suite for images and videos. Strips EXIF, GPS, camera metadata, and QuickTime/MP4 tags.">
-  <link rel="stylesheet" href="style.css">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="stylesheet" href="style.css?v=2.5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
@@ -97,6 +100,28 @@
         Deep-scan and strip EXIF, GPS, camera models, dates, and QuickTime/MP4 tags.
         Zero data ever leaves your browser.
       </p>
+
+      <!-- Interactive Dual Mode Selector Tabs -->
+      <div class="mode-selector-banner">
+        <div class="mode-selector-tabs" role="tablist" aria-label="Operating Mode Selector">
+          <button type="button" id="tabCleanerMode" class="mode-tab active" role="tab" aria-selected="true" title="Switch to Privacy Cleaner Mode">
+            <span class="tab-icon">🛡️</span>
+            <div class="tab-info">
+              <span class="tab-title">Privacy Sanitizer</span>
+              <span class="tab-desc">Lossless metadata scrub &amp; strip</span>
+            </div>
+            <span class="tab-status-pill active-pill" id="tabCleanerPill">ACTIVE</span>
+          </button>
+          <button type="button" id="tabExtractionMode" class="mode-tab cyber-tab" role="tab" aria-selected="false" title="Activate Cyber Hacker Extraction Mode">
+            <span class="tab-icon">⚡</span>
+            <div class="tab-info">
+              <span class="tab-title">Cyber Extraction Mode</span>
+              <span class="tab-desc">GPS telemetry, optics &amp; deep EXIF</span>
+            </div>
+            <span class="tab-status-pill cyber-pulse-pill" id="tabExtractionPill">CLICK TO ACTIVATE ➔</span>
+          </button>
+        </div>
+      </div>
 
       <!-- Dropzone Area (Shared by both modes) -->
       <div class="drop-wrapper">
@@ -443,6 +468,6 @@
   </footer>
 
   <!-- Main Application Script -->
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=2.5"></script>
 </body>
 </html>

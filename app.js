@@ -22,6 +22,12 @@ const heroSubtext = $('#heroSubtext');
 const dropTitle = $('#dropTitle');
 const dropHint = $('#dropHint');
 
+// Interactive Hero Mode Selector Elements
+const tabCleanerMode = $('#tabCleanerMode');
+const tabExtractionMode = $('#tabExtractionMode');
+const tabCleanerPill = $('#tabCleanerPill');
+const tabExtractionPill = $('#tabExtractionPill');
+
 // Hacker Coding Animation Overlay Elements
 const hackerTransitionOverlay = $('#hackerTransitionOverlay');
 const matrixCanvas = $('#matrixCanvas');
@@ -338,6 +344,36 @@ function setMode(mode) {
     announce('Cleaner Mode activated: Privacy sanitizer active');
   }
 
+  if (tabCleanerMode && tabExtractionMode) {
+    if (isExtraction) {
+      tabCleanerMode.classList.remove('active');
+      tabExtractionMode.classList.add('active');
+      tabCleanerMode.setAttribute('aria-selected', 'false');
+      tabExtractionMode.setAttribute('aria-selected', 'true');
+      if (tabCleanerPill) {
+        tabCleanerPill.textContent = 'SWITCH BACK ➔';
+        tabCleanerPill.className = 'tab-status-pill';
+      }
+      if (tabExtractionPill) {
+        tabExtractionPill.textContent = 'ACTIVE • ONLINE';
+        tabExtractionPill.className = 'tab-status-pill active-pill';
+      }
+    } else {
+      tabCleanerMode.classList.add('active');
+      tabExtractionMode.classList.remove('active');
+      tabCleanerMode.setAttribute('aria-selected', 'true');
+      tabExtractionMode.setAttribute('aria-selected', 'false');
+      if (tabCleanerPill) {
+        tabCleanerPill.textContent = 'ACTIVE';
+        tabCleanerPill.className = 'tab-status-pill active-pill';
+      }
+      if (tabExtractionPill) {
+        tabExtractionPill.textContent = 'CLICK TO ACTIVATE ➔';
+        tabExtractionPill.className = 'tab-status-pill cyber-pulse-pill';
+      }
+    }
+  }
+
   if (currentIndex !== -1 && fileQueue[currentIndex]) {
     switchWorkspaceView();
   }
@@ -352,6 +388,22 @@ modeToggleBtn.addEventListener('click', () => {
     setMode('cleaner');
   }
 });
+
+if (tabExtractionMode) {
+  tabExtractionMode.addEventListener('click', () => {
+    if (currentMode !== 'extraction') {
+      triggerHackerCodingAnimation();
+    }
+  });
+}
+
+if (tabCleanerMode) {
+  tabCleanerMode.addEventListener('click', () => {
+    if (currentMode !== 'cleaner') {
+      setMode('cleaner');
+    }
+  });
+}
 
 // Keyboard shortcut: Ctrl + E or Cmd + E toggles Extraction Mode
 window.addEventListener('keydown', (e) => {
@@ -1016,4 +1068,16 @@ function valToStr(v) {
 }
 
 // Initialize Mode on startup
-setMode(currentMode);
+const urlParams = new URLSearchParams(window.location.search);
+const requestedMode = urlParams.get('mode');
+const hasExtractFlag = urlParams.has('extract') || window.location.hash === '#extract';
+
+if (requestedMode === 'extraction' || requestedMode === 'extract' || hasExtractFlag) {
+  setMode('cleaner');
+  // Auto-play the cinematic hacker animation when opened via direct link!
+  setTimeout(() => {
+    triggerHackerCodingAnimation();
+  }, 350);
+} else {
+  setMode(currentMode);
+}
