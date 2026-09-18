@@ -3,14 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MetaClean Pro v2.0 — Private Image & Video Metadata Cleaner</title>
-  <meta name="description" content="100% client-side privacy scrubber for images and videos. Strips EXIF, GPS, camera metadata, and QuickTime/MP4 tags without server uploads.">
+  <title>MetaClean Pro v2.0 — Private Media Sanitizer &amp; Cyber Extractor</title>
+  <meta name="description" content="100% client-side privacy scrubber and deep metadata extraction suite for images and videos. Strips EXIF, GPS, camera metadata, and QuickTime/MP4 tags.">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <!-- EXIF.js for deep extraction mode -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
 </head>
 <body>
+
+  <!-- Cyber Scanline Overlay (Active in Extraction Mode) -->
+  <div class="cyber-scanlines" aria-hidden="true"></div>
 
   <!-- Top Navbar -->
   <header class="navbar">
@@ -18,14 +23,23 @@
       <div class="brand">
         <span class="brand-sparkle">✦</span>
         <span class="brand-name">MetaClean</span>
-        <span class="brand-badge">PRO v2.0</span>
+        <span class="brand-badge" id="appBrandBadge">PRO v2.0</span>
       </div>
-      <div class="nav-badges">
-        <span class="badge badge-secure" title="Zero network requests during cleaning">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          100% Local / No Uploads
-        </span>
-        <span class="badge badge-media">Images &amp; Videos</span>
+
+      <div class="nav-controls">
+        <!-- EXTRACTION MODE TOGGLE BUTTON -->
+        <button id="modeToggleBtn" class="mode-toggle-btn" aria-pressed="false" title="Switch between Privacy Cleaner and Cyber Extraction Mode">
+          <span class="mode-toggle-icon">⚡</span>
+          <span class="mode-toggle-label">EXTRACTION MODE</span>
+          <span class="mode-toggle-indicator" id="modeIndicator">OFF</span>
+        </button>
+
+        <div class="nav-badges">
+          <span class="badge badge-secure" title="Zero network requests during cleaning">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            100% Local Sandbox
+          </span>
+        </div>
       </div>
     </div>
   </header>
@@ -35,28 +49,30 @@
 
   <main class="main-content">
 
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="pill-badge">PRIVACY-FIRST MEDIA SANITIZER</div>
-      <h1>Scrub private metadata.<br><span class="gradient-text">Protect your media.</span></h1>
-      <p class="hero-subtext">
+    <!-- ====================================================================
+         HERO SECTION (Dynamically adapts between Cleaner & Hacker Extractor)
+         ==================================================================== -->
+    <section class="hero" id="heroSection">
+      <div class="pill-badge" id="heroPill">PRIVACY-FIRST MEDIA SANITIZER</div>
+      <h1 id="heroTitle">Scrub private metadata.<br><span class="gradient-text">Protect your media.</span></h1>
+      <p class="hero-subtext" id="heroSubtext">
         Deep-scan and strip EXIF, GPS, camera models, dates, and QuickTime/MP4 tags.
         Zero data ever leaves your browser.
       </p>
 
-      <!-- Dropzone Area -->
+      <!-- Dropzone Area (Shared by both modes) -->
       <div class="drop-wrapper">
         <label class="drop-zone" id="dropZone" for="fileInput" tabindex="0">
           <input id="fileInput" type="file" multiple accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm">
-          <div class="drop-icon">
+          <div class="drop-icon" id="dropIcon">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="17 8 12 3 7 8"></polyline>
               <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
           </div>
-          <div class="drop-title">Drop images or videos here</div>
-          <div class="drop-hint">or <span class="browse-link">browse files</span> from your device</div>
+          <div class="drop-title" id="dropTitle">Drop images or videos here</div>
+          <div class="drop-hint" id="dropHint">or <span class="browse-link">browse files</span> from your device</div>
           <div class="supported-tags">
             <span class="tag">JPEG</span>
             <span class="tag">PNG (32-bit)</span>
@@ -67,19 +83,22 @@
           </div>
         </label>
       </div>
-      <div class="privacy-notice">
+
+      <div class="privacy-notice" id="heroNotice">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-        Lossless video scrubbing via in-place ISOBMFF zero-copy patching • Native WebP alpha retention
+        <span>Lossless video scrubbing via in-place ISOBMFF zero-copy patching • Native WebP alpha retention</span>
       </div>
     </section>
 
-    <!-- Workspace & Inspection Panel (Hidden by default until file dropped) -->
-    <section id="workspace" class="workspace hidden">
+    <!-- ====================================================================
+         VIEW 1: CLEANER WORKSPACE (Active when Extraction Mode is OFF)
+         ==================================================================== -->
+    <section id="cleanerWorkspace" class="workspace hidden">
       
-      <!-- Toolbar & Queue Bar -->
+      <!-- Toolbar & File Info -->
       <div class="workspace-header">
         <div class="active-file-info">
-          <div class="media-thumb-box" id="mediaThumbBox">
+          <div class="media-thumb-box">
             <img id="imageThumb" class="thumb-media" alt="Original media thumbnail">
             <video id="videoThumb" class="thumb-media hidden" muted loop playsinline></video>
           </div>
@@ -98,7 +117,7 @@
           </div>
         </div>
 
-        <!-- Controls -->
+        <!-- Cleaner Controls -->
         <div class="workspace-actions">
           <div class="setting-group" id="qualitySettingGroup">
             <label for="qualitySelect">Image Quality:</label>
@@ -116,12 +135,12 @@
         </div>
       </div>
 
-      <!-- Batch Queue List (Shows when multiple files are loaded) -->
+      <!-- Batch Queue Card -->
       <div id="batchQueueCard" class="batch-card hidden">
         <div class="batch-header">
           <div>
             <h3>Batch Processing Queue (<span id="batchCount">0</span> files)</h3>
-            <p>Process multiple photos and videos at once.</p>
+            <p>Process multiple photos and videos simultaneously.</p>
           </div>
           <div class="batch-actions">
             <button id="cleanAllBtn" class="btn btn-secondary btn-sm">Clean All</button>
@@ -131,9 +150,8 @@
         <div id="batchItemsList" class="batch-items"></div>
       </div>
 
-      <!-- Inspection & Comparison Grid -->
+      <!-- Cleaner Inspector & Verification Grid -->
       <div class="inspector-grid">
-        
         <!-- Left: Metadata Detected -->
         <div class="card card-detected">
           <div class="card-header">
@@ -143,7 +161,6 @@
             </div>
             <div class="count-pill danger" id="detectedCount">0</div>
           </div>
-          
           <div id="tagsList" class="tags-container">
             <div class="empty-state">No metadata scanned yet.</div>
           </div>
@@ -160,7 +177,6 @@
           </div>
 
           <div class="verification-body">
-            <!-- Stats -->
             <div class="stat-boxes">
               <div class="stat-box">
                 <span class="stat-num text-danger" id="statBefore">0</span>
@@ -173,7 +189,6 @@
               </div>
             </div>
 
-            <!-- Preview comparison -->
             <div id="previewContainer" class="preview-box">
               <div class="preview-badge">Sanitized Output Preview</div>
               <img id="cleanImagePreview" class="preview-media hidden" alt="Cleaned preview">
@@ -184,7 +199,6 @@
               </div>
             </div>
 
-            <!-- Download Button -->
             <div class="download-section">
               <button id="downloadBtn" class="btn btn-success btn-lg w-full" disabled>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -193,24 +207,179 @@
             </div>
           </div>
         </div>
+      </div>
+
+    </section>
+
+    <!-- ====================================================================
+         VIEW 2: CYBER EXTRACTION DOSSIER (Active when Extraction Mode is ON)
+         ==================================================================== -->
+    <section id="extractionWorkspace" class="extraction-workspace hidden">
+      
+      <!-- Terminal Header / Dossier Bar -->
+      <div class="cyber-header">
+        <div class="cyber-status-bar">
+          <div class="terminal-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <div class="terminal-title">
+            <span class="prompt-prefix">root@osint:~$</span>
+            <span class="terminal-cmd">inspect --target="<span id="extractFileName">target.jpg</span>" --deep</span>
+          </div>
+          <div class="terminal-badges">
+            <span class="cyber-tag cyber-tag-live">DEEP_EXTRACTOR // ACTIVE</span>
+          </div>
+        </div>
+
+        <div class="cyber-preview-row">
+          <div class="cyber-thumb-box">
+            <img id="extractImageThumb" class="cyber-thumb" alt="Extracted media preview">
+            <video id="extractVideoThumb" class="cyber-thumb hidden" muted loop playsinline></video>
+          </div>
+          <div class="cyber-target-meta">
+            <div class="cyber-filename" id="extractTargetName">target_image.jpg</div>
+            <div class="cyber-fileinfo" id="extractTargetInfo">IMAGE/JPEG • 0 KB • 0 × 0</div>
+            <div class="cyber-status-line">
+              <span class="status-indicator"></span>
+              <span id="extractStatusText">METADATA DUMP COMPLETE // 0 TAGS PARSED</span>
+            </div>
+          </div>
+          <div class="cyber-quick-actions">
+            <button id="extractCleanBtn" class="btn btn-cyber-danger" title="Scrub all extracted metadata from this file">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              SCRUB THIS FILE
+            </button>
+            <button id="copyJsonBtn" class="btn btn-cyber-secondary" title="Copy metadata report as JSON">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              COPY JSON
+            </button>
+            <button id="extractResetBtn" class="btn btn-cyber-ghost">NEW TARGET</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- No EXIF Alert in Hacker Mode -->
+      <div id="extractNoExifMsg" class="cyber-alert cyber-alert-warning hidden">
+        <div class="alert-icon">⚠</div>
+        <div class="alert-content">
+          <strong>NO EXIF MARKERS FOUND</strong>
+          <span>This file has no embedded EXIF tags. It may be a screenshot, re-exported file, or previously sanitized through a privacy scrubber.</span>
+        </div>
+      </div>
+
+      <!-- Extraction Cards Grid -->
+      <div class="cyber-grid">
+
+        <!-- 1. GPS Location & Google Maps Card -->
+        <div id="gpsSection" class="cyber-card cyber-card-glow hidden">
+          <div class="cyber-card-header">
+            <div class="cyber-card-title">
+              <span class="cyber-icon">📍</span>
+              <h3>GEOLOCATION &amp; GPS TELEMETRY</h3>
+            </div>
+            <span class="cyber-pill cyber-pill-green">COORDINATES LOCKED</span>
+          </div>
+
+          <div class="gps-body">
+            <div class="gps-coords-display">
+              <div class="coord-item">
+                <span class="coord-label">LATITUDE</span>
+                <span class="coord-val" id="gpsLatVal">0.000000°</span>
+              </div>
+              <div class="coord-item">
+                <span class="coord-label">LONGITUDE</span>
+                <span class="coord-val" id="gpsLonVal">0.000000°</span>
+              </div>
+              <div class="coord-item" id="gpsAltItem">
+                <span class="coord-label">ALTITUDE</span>
+                <span class="coord-val" id="gpsAltVal">—</span>
+              </div>
+            </div>
+
+            <!-- Clickable Google Maps Banner -->
+            <a id="googleMapsLink" href="#" target="_blank" rel="noopener noreferrer" class="cyber-map-btn">
+              <div class="map-btn-left">
+                <div class="map-radar-pulse"></div>
+                <div>
+                  <strong>OPEN COORDINATES IN GOOGLE MAPS</strong>
+                  <span id="googleMapsSub">View satellite imagery &amp; location pin</span>
+                </div>
+              </div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 2. Device Dossier -->
+        <div id="deviceSection" class="cyber-card hidden">
+          <div class="cyber-card-header">
+            <div class="cyber-card-title">
+              <span class="cyber-icon">📱</span>
+              <h3>HARDWARE IDENTIFIERS</h3>
+            </div>
+            <span class="cyber-pill">DEVICE SPEC</span>
+          </div>
+          <div class="cyber-chips-grid" id="deviceChipsGrid"></div>
+        </div>
+
+        <!-- 3. Camera Optics & Exposure -->
+        <div id="cameraOpticsSection" class="cyber-card hidden">
+          <div class="cyber-card-header">
+            <div class="cyber-card-title">
+              <span class="cyber-icon">📷</span>
+              <h3>CAMERA OPTICS &amp; SENSOR TELEMETRY</h3>
+            </div>
+            <span class="cyber-pill">EXPOSURE PROFILE</span>
+          </div>
+          <div class="cyber-chips-grid" id="cameraChipsGrid"></div>
+        </div>
+
+        <!-- 4. Raw EXIF / Metadata Matrix Terminal Table -->
+        <div id="rawTerminalSection" class="cyber-card raw-terminal-card">
+          <div class="cyber-card-header">
+            <div class="cyber-card-title">
+              <span class="cyber-icon">⚡</span>
+              <h3>RAW METADATA BUFFER (<span id="rawTagCount">0</span> TAGS DUMPED)</h3>
+            </div>
+            <div class="raw-search-box">
+              <input type="text" id="rawSearchInput" placeholder="Filter tags (e.g. GPS, Date, Make)..." class="cyber-input">
+            </div>
+          </div>
+
+          <div class="terminal-table-wrapper">
+            <table class="cyber-table">
+              <thead>
+                <tr>
+                  <th style="width: 35%;">TAG IDENTIFIER</th>
+                  <th style="width: 65%;">EXTRACTED VALUE</th>
+                </tr>
+              </thead>
+              <tbody id="rawTableBody">
+                <tr><td colspan="2" class="terminal-empty">No metadata loaded.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
       </div>
 
     </section>
 
-    <!-- Capabilities & Privacy Guarantees Section -->
-    <section class="capabilities">
-      <h2>How MetaClean Pro v2.0 Sanitizes Your Media</h2>
+    <!-- Capabilities Section (Visible when no active file) -->
+    <section class="capabilities" id="capabilitiesSection">
+      <h2>Privacy Sanitization &amp; Intelligence Capabilities</h2>
       <div class="features-grid">
         <div class="feature-card">
           <div class="feature-icon">📍</div>
           <h3>GPS &amp; Geolocation</h3>
-          <p>Extracts and strips exact latitude, longitude, and altitude embedded by smartphones and drones.</p>
+          <p>Extracts or wipes exact latitude, longitude, and altitude embedded by smartphones and drones.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">📷</div>
           <h3>Camera &amp; Lens Hardware</h3>
-          <p>Removes device serial numbers, camera model, lens specifications, and internal sensor details.</p>
+          <p>Deep-reads serial numbers, camera model, lens specifications, and internal sensor profiles.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🎬</div>
@@ -218,9 +387,9 @@
           <p>In-place ISOBMFF box rewriting zeros creation timestamps and wipes <code>udta</code>/<code>meta</code> tags without transcoding.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">🎨</div>
-          <h3>Wide-Gamut &amp; Alpha Retention</h3>
-          <p>Preserves WebP and PNG transparency without conversion bugs. Respects Display P3 and sRGB color profiles.</p>
+          <div class="feature-icon">⚡</div>
+          <h3>Dual Cleaner &amp; OSINT Modes</h3>
+          <p>Toggle between zero-trace sanitization and deep intelligence extraction with instant Google Maps pins.</p>
         </div>
       </div>
     </section>
@@ -230,8 +399,8 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-container">
-      <div>MetaClean Pro v2.0 • 100% Client-Side Image &amp; Video Privacy Scrubber</div>
-      <div class="footer-note">All processing takes place in your local browser sandbox.</div>
+      <div>MetaClean Pro v2.0 • 100% Local Sandbox • Zero Server Uploads</div>
+      <div class="footer-note">PhotoMeta Extraction Engine Integrated • Dual Sanitizer &amp; Hacker OSINT Modes</div>
     </div>
   </footer>
 
