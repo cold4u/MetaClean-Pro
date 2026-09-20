@@ -84,7 +84,8 @@
         <button id="startBtn" class="primary-btn" onclick="if(window.gameInstance) window.gameInstance.startGame();">Start Engine</button>
         <div class="keyboard-hints">
           <p><kbd>W</kbd> / <kbd>↑</kbd> Gas &bull; <kbd>S</kbd> / <kbd>↓</kbd> Brake &bull; <kbd>A</kbd> / <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer</p>
-          <p><kbd>Space</kbd> / <kbd>F</kbd> Unlimited Rockets 🚀 &bull; <kbd>Shift</kbd> Nitro ⚡ &bull; <kbd>P</kbd> Pause</p>
+          <p><kbd>Space</kbd> / <kbd>F</kbd> Unlimited Rockets 🚀 &bull; <kbd>Shift</kbd> Nitro ⚡</p>
+          <p class="mobile-hint">📱 <strong>Touch / Mobile</strong>: Tap or Drag left/right to steer &bull; Double-tap for Rockets &bull; Use on-screen pedals below</p>
         </div>
       </div>
 
@@ -164,14 +165,19 @@
       <!-- Touch / Clickable Controls for Mobile & Accessibility -->
       <div class="controls-panel">
         <div class="touch-steering">
-          <button id="btnLeft" class="ctrl-btn" aria-label="Steer Left">◀</button>
-          <button id="btnRight" class="ctrl-btn" aria-label="Steer Right">▶</button>
+          <button id="btnLeft" class="ctrl-btn steer-btn" aria-label="Steer Left">◀</button>
+          <button id="btnRight" class="ctrl-btn steer-btn" aria-label="Steer Right">▶</button>
+        </div>
+        <div class="touch-center">
+          <button id="btnAutoGas" class="ctrl-btn auto-gas-btn" aria-label="Auto Gas Cruise">
+            <span id="autoGasLabel">AUTO GAS</span>
+          </button>
         </div>
         <div class="touch-actions">
-          <button id="btnBrake" class="ctrl-btn" aria-label="Brake" style="color: #ff5252;">▼</button>
-          <button id="btnGas" class="ctrl-btn" aria-label="Accelerate" style="color: #00ff88;">▲</button>
+          <button id="btnBrake" class="ctrl-btn brake-btn" aria-label="Brake" style="color: #ff5252;">▼</button>
+          <button id="btnGas" class="ctrl-btn gas-btn" aria-label="Accelerate" style="color: #00ff88;">▲</button>
           <button id="btnNitro" class="ctrl-btn nitro-btn" aria-label="Nitro Boost">⚡</button>
-          <button id="btnRocket" class="ctrl-btn rocket-btn" aria-label="Fire Rocket">🚀</button>
+          <button id="btnRocket" class="ctrl-btn rocket-btn" aria-label="Fire Unlimited Rockets">🚀</button>
         </div>
       </div>
 

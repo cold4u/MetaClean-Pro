@@ -930,6 +930,7 @@ class Game {
     this.hitStop = 0; // micro-pause in milliseconds
     this.screenShake = 0;
     this.crtEnabled = SafeStorage.getItem('turbo_drive_crt', 'false') === 'true';
+    this.autoGas = false;
 
     // Cache UI Elements
     this.initDOM();
@@ -999,7 +1000,9 @@ class Game {
       btnGas: document.getElementById('btnGas'),
       btnBrake: document.getElementById('btnBrake'),
       btnNitro: document.getElementById('btnNitro'),
-      btnRocket: document.getElementById('btnRocket')
+      btnRocket: document.getElementById('btnRocket'),
+      btnAutoGas: document.getElementById('btnAutoGas'),
+      autoGasLabel: document.getElementById('autoGasLabel')
     };
 
     // Initialize displays
@@ -1119,7 +1122,16 @@ class Game {
       }
     });
 
-    // Touch & Button Click Handlers
+    // Mobile Haptic Feedback Helper
+    const haptic = (ms = 15) => {
+      try {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate(ms);
+        }
+      } catch (e) {}
+    };
+
+    // Touch & Button Click Handlers with Haptic Response
     const bindTouch = (elem, pressAction, releaseAction) => {
       if (!elem) return;
       const start = (e) => {
@@ -1128,11 +1140,12 @@ class Game {
         if (this.state === 'START') {
           this.startGame();
         }
+        haptic(15);
         pressAction();
       };
       const stop = (e) => {
         e.preventDefault();
-        releaseAction();
+        if (releaseAction) releaseAction();
       };
       elem.addEventListener('pointerdown', start);
       elem.addEventListener('pointerup', stop);
@@ -1151,6 +1164,14 @@ class Game {
     }, () => {
       this.inputs.rocket = false;
     });
+
+    if (this.dom.btnAutoGas) {
+      this.dom.btnAutoGas.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.sound.init();
+        this.toggleAutoGas();
+      });
+    }
 
     // Garage Machine Selection Wiring
     const selectMachine = (key, card) => {
@@ -1200,9 +1221,10 @@ class Game {
     if (this.dom.btnCrtToggle) this.dom.btnCrtToggle.addEventListener('click', () => this.toggleCrt());
     if (this.dom.btnPauseToggle) this.dom.btnPauseToggle.addEventListener('click', () => this.togglePause());
 
-    // Interactive Drag / Swipe Steering on Canvas
+    // Interactive Drag, Swipe & Tap Zone Steering on Canvas for Mobile
     let isDragging = false;
-    let dragStartX = 0;
+    let dragStartY = 0;
+    let lastTapTime = 0;
 
     this.canvas.addEventListener('pointerdown', (e) => {
       this.sound.init();
@@ -1210,18 +1232,50 @@ class Game {
         this.startGame();
         return;
       }
+      if (this.state !== 'PLAYING') return;
+
+      const now = performance.now();
+      // Double-tap on canvas to fire rocket immediately!
+      if (now - lastTapTime < 280) {
+        this.fireRocket();
+        haptic(25);
+        lastTapTime = 0;
+        return;
+      }
+      lastTapTime = now;
+
       isDragging = true;
-      dragStartX = e.offsetX;
+      dragStartY = e.clientY;
+
+      // Screen zone tap steering
+      const rect = this.canvas.getBoundingClientRect();
+      const clickRelX = (e.clientX - rect.left) / rect.width;
+      if (clickRelX < 0.44) {
+        this.inputs.left = true;
+        this.inputs.right = false;
+        haptic(10);
+      } else if (clickRelX > 0.56) {
+        this.inputs.right = true;
+        this.inputs.left = false;
+        haptic(10);
+      }
     });
 
     window.addEventListener('pointermove', (e) => {
       if (!isDragging || this.state !== 'PLAYING') return;
+
+      // Swipe up gesture for Nitro
+      if (dragStartY - e.clientY > 45 && !this.player.isNitroActive) {
+        this.inputs.nitro = true;
+        haptic(20);
+      }
+
       const rect = this.canvas.getBoundingClientRect();
       const currentX = (e.clientX - rect.left) * (this.width / rect.width);
-      if (currentX < this.player.x + this.player.width / 2 - 10) {
+      if (currentX < this.player.x + this.player.width / 2 - 12) {
         this.inputs.left = true;
         this.inputs.right = false;
-      } else if (currentX > this.player.x + this.player.width / 2 + 10) {
+      } else if (currentX > this.player.x + this.player.width / 2 + 12) {
         this.inputs.right = true;
         this.inputs.left = false;
       } else {
@@ -1230,13 +1284,31 @@ class Game {
       }
     });
 
-    window.addEventListener('pointerup', () => {
+    const stopDrag = () => {
       if (isDragging) {
         isDragging = false;
         this.inputs.left = false;
         this.inputs.right = false;
+        this.inputs.nitro = false;
       }
-    });
+    };
+
+    window.addEventListener('pointerup', stopDrag);
+    window.addEventListener('pointercancel', stopDrag);
+  }
+
+  toggleAutoGas() {
+    this.autoGas = !this.autoGas;
+    if (this.dom.btnAutoGas) {
+      this.dom.btnAutoGas.classList.toggle('active', this.autoGas);
+    }
+    if (this.dom.autoGasLabel) {
+      this.dom.autoGasLabel.textContent = this.autoGas ? 'AUTO: ON' : 'AUTO GAS';
+    }
+    this.sound.playShiftPop();
+    try {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(20);
+    } catch (e) {}
   }
 
   fireRocket() {
@@ -1437,8 +1509,12 @@ class Game {
       return;
     }
 
-    // 1. Update Player with delta time
-    this.player.update(this.inputs, dt);
+    // 1. Update Player with delta time (apply Auto-Gas cruise if enabled)
+    const effectiveInputs = {
+      ...this.inputs,
+      up: this.inputs.up || (this.autoGas && !this.inputs.down)
+    };
+    this.player.update(effectiveInputs, dt);
 
     // Calculate km/h for dashboard (speed unit converted)
     const kmh = Math.round(this.player.speed * 12);
@@ -1448,7 +1524,7 @@ class Game {
     this.sound.updateEngineWithGear(
       this.player.currentGear,
       this.player.rpm,
-      this.inputs.up,
+      effectiveInputs.up,
       this.inputs.down,
       this.player.isNitroActive
     );

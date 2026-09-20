@@ -315,6 +315,9 @@ body {
   transition: all 0.15s ease;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
   touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .ctrl-btn:hover, .ctrl-btn:active {
@@ -322,6 +325,21 @@ body {
   border-color: #00f0ff;
   transform: translateY(2px);
   box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+}
+
+.auto-gas-btn {
+  font-size: 0.65rem;
+  padding: 8px 10px;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #8a99ad;
+  letter-spacing: 0.5px;
+}
+
+.auto-gas-btn.active {
+  border-color: #00ff88;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.2);
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
 }
 
 .ctrl-btn.nitro-btn {
@@ -342,6 +360,36 @@ body {
 .ctrl-btn.rocket-btn:hover, .ctrl-btn.rocket-btn:active {
   background: rgba(255, 51, 102, 0.35);
   box-shadow: 0 0 15px rgba(255, 51, 102, 0.85);
+}
+
+.mobile-hint {
+  color: #00f0ff !important;
+  font-size: 0.72rem !important;
+  margin-top: 6px;
+  background: rgba(0, 240, 255, 0.08);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+@media (max-width: 600px) {
+  .controls-panel {
+    gap: 4px;
+  }
+  .ctrl-btn {
+    padding: 12px 13px;
+    font-size: 1.15rem;
+    min-height: 48px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .auto-gas-btn {
+    font-size: 0.6rem;
+    padding: 6px;
+    min-width: 58px;
+  }
 }
 
 .quick-bar {
