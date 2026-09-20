@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Turbo Drive: Highway Fury | Arcade Car Game</title>
+  <meta name="description" content="Fast-paced retro-arcade 2D car driving game with nitro boost, traffic dodging, dynamic physics, and synthesized sound.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏎️</text></svg>">
+</head>
+<body>
+  <div class="game-wrapper">
+    <!-- Top HUD: Stats Bar -->
+    <header class="top-hud">
+      <div class="hud-card">
+        <span class="hud-label">Best Score</span>
+        <span id="bestScoreDisplay" class="hud-value gold">0</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">Distance</span>
+        <span id="distanceDisplay" class="hud-value">0 m</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">Score</span>
+        <span id="scoreDisplay" class="hud-value">0</span>
+      </div>
+    </header>
+
+    <!-- Canvas Container -->
+    <main class="canvas-container" id="canvasContainer">
+      <!-- Overlay Health, Coins, Rockets, and Combo inside canvas view -->
+      <div class="canvas-overlay-hud">
+        <div class="hud-pill">
+          <span>🪙</span>
+          <span id="coinCountDisplay" style="color: #ffd700;">0</span>
+        </div>
+        <div class="hud-pill">
+          <span>🚀</span>
+          <span id="rocketCountDisplay" style="color: #ff3366; font-weight: 900; font-size: 1.15rem;">∞</span>
+        </div>
+        <div id="comboBadge" class="hud-pill combo-pill hidden">
+          <span>🔥</span>
+          <span id="comboMultiplier" style="color: #ff0055;">1.0x</span>
+        </div>
+        <div class="hud-pill">
+          <span>❤️</span>
+          <div class="health-bar-container">
+            <div id="healthFill" class="health-fill" style="width: 100%;"></div>
+          </div>
+          <span id="healthTextDisplay">100%</span>
+        </div>
+      </div>
+
+      <div id="crtOverlay" class="crt-scanlines hidden"></div>
+      <canvas id="gameCanvas" width="450" height="700"></canvas>
+
+      <!-- Start Screen Modal -->
+      <div id="startModal" class="screen-modal">
+        <h1>Turbo Drive</h1>
+        <p class="subtitle">Highway Fury &bull; Studio Edition</p>
+
+        <!-- Garage Vehicle Selector -->
+        <div class="garage-selector">
+          <div class="garage-title">SELECT MACHINE</div>
+          <div class="car-cards">
+            <button class="car-card active" id="cardApex" type="button">
+              <div class="car-card-icon">🏎️</div>
+              <div class="car-card-name">Apex GT</div>
+              <div class="car-card-trait">Agile &bull; Nitro</div>
+            </button>
+            <button class="car-card" id="cardInterceptor" type="button">
+              <div class="car-card-icon">🚔</div>
+              <div class="car-card-name">V8 Brawler</div>
+              <div class="car-card-trait">Armored &bull; Heavy</div>
+            </button>
+            <button class="car-card" id="cardPhantom" type="button">
+              <div class="car-card-icon">⚡</div>
+              <div class="car-card-name">Phantom</div>
+              <div class="car-card-trait">Hyper &bull; Drift</div>
+            </button>
+          </div>
+        </div>
+
+        <button id="startBtn" class="primary-btn" onclick="if(window.gameInstance) window.gameInstance.startGame();">Start Engine</button>
+        <div class="keyboard-hints">
+          <p><kbd>W</kbd> / <kbd>↑</kbd> Gas &bull; <kbd>S</kbd> / <kbd>↓</kbd> Brake &bull; <kbd>A</kbd> / <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steer</p>
+          <p><kbd>Space</kbd> / <kbd>F</kbd> Unlimited Rockets 🚀 &bull; <kbd>Shift</kbd> Nitro ⚡ &bull; <kbd>P</kbd> Pause</p>
+        </div>
+      </div>
+
+      <!-- Pause Screen Modal -->
+      <div id="pauseModal" class="screen-modal hidden">
+        <h2>GAME PAUSED</h2>
+        <p>Take a breath and get back behind the wheel!</p>
+        <button id="resumeBtn" class="primary-btn" onclick="if(window.gameInstance) window.gameInstance.togglePause();">Resume</button>
+      </div>
+
+      <!-- Game Over Screen Modal -->
+      <div id="gameOverModal" class="screen-modal hidden">
+        <h2 style="color: #ff0055;">WRECKED!</h2>
+        <p id="gameOverSub">Your car was totaled in a collision.</p>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-title">Final Score</div>
+            <div id="finalScore" class="stat-num">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-title">Distance</div>
+            <div id="finalDistance" class="stat-num">0 m</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-title">Coins</div>
+            <div id="finalCoins" class="stat-num">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-title">Top Speed</div>
+            <div id="finalTopSpeed" class="stat-num">0 km/h</div>
+          </div>
+        </div>
+        <button id="restartBtn" class="primary-btn" onclick="if(window.gameInstance) window.gameInstance.restartGame();">Drive Again</button>
+      </div>
+    </main>
+
+    <!-- Bottom HUD: Gauges and Controls -->
+    <footer class="bottom-hud">
+      <!-- Gauges: Speed, Gear/Tachometer, Nitro -->
+      <div class="gauges-row">
+        <div class="gauge-box">
+          <div class="gauge-info">
+            <span style="color: var(--text-muted);">SPEED</span>
+            <span id="speedKmh">0 KM/H</span>
+          </div>
+          <div class="gauge-bar-outer">
+            <div id="speedGauge" class="gauge-bar-inner speed"></div>
+          </div>
+        </div>
+        <div class="gauge-box gear-box">
+          <div class="gauge-info">
+            <span style="color: var(--text-muted);">GEAR</span>
+            <div class="shift-leds" id="shiftLights">
+              <span class="led" id="led1"></span>
+              <span class="led" id="led2"></span>
+              <span class="led" id="led3"></span>
+              <span class="led" id="led4"></span>
+              <span class="led" id="led5"></span>
+            </div>
+            <span id="gearDisplay" class="gear-badge">N</span>
+          </div>
+          <div class="gauge-bar-outer">
+            <div id="tachometerFill" class="gauge-bar-inner tacho"></div>
+          </div>
+        </div>
+        <div class="gauge-box">
+          <div class="gauge-info">
+            <span style="color: var(--text-muted);">NITRO (SHIFT)</span>
+            <span id="nitroPercent">100%</span>
+          </div>
+          <div class="gauge-bar-outer">
+            <div id="nitroGauge" class="gauge-bar-inner nitro"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Touch / Clickable Controls for Mobile & Accessibility -->
+      <div class="controls-panel">
+        <div class="touch-steering">
+          <button id="btnLeft" class="ctrl-btn" aria-label="Steer Left">◀</button>
+          <button id="btnRight" class="ctrl-btn" aria-label="Steer Right">▶</button>
+        </div>
+        <div class="touch-actions">
+          <button id="btnBrake" class="ctrl-btn" aria-label="Brake" style="color: #ff5252;">▼</button>
+          <button id="btnGas" class="ctrl-btn" aria-label="Accelerate" style="color: #00ff88;">▲</button>
+          <button id="btnNitro" class="ctrl-btn nitro-btn" aria-label="Nitro Boost">⚡</button>
+          <button id="btnRocket" class="ctrl-btn rocket-btn" aria-label="Fire Rocket">🚀</button>
+        </div>
+      </div>
+
+      <!-- Quick Action Utilities -->
+      <div class="quick-bar">
+        <button id="btnSoundToggle" class="hud-btn">🔊 SFX: ON</button>
+        <button id="btnMusicToggle" class="hud-btn">🎵 Synth: ON</button>
+        <button id="btnCrtToggle" class="hud-btn">📺 CRT: OFF</button>
+        <button id="btnPauseToggle" class="hud-btn">⏸ Pause</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/road.js"></script>
+  <script src="js/car.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

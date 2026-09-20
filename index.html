@@ -6,7 +6,33 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header><a class="brand"><span>✦</span> MetaClean <i>PRO</i></a><div class="privacy">🔒 Runs locally</div></header>
+<!-- Cyber Arcade Modal (Turbo Drive: Highway Fury) -->
+<div id="arcadeModal" class="arcade-modal hidden" aria-hidden="true" role="dialog" aria-label="Turbo Drive Arcade">
+  <div class="arcade-modal-backdrop" id="arcadeBackdrop"></div>
+  <div class="arcade-modal-dialog">
+    <div class="arcade-modal-header">
+      <div class="arcade-modal-title">
+        <span class="arcade-tag">ARCADE</span>
+        <span>🏎️ Turbo Drive: Highway Fury</span>
+      </div>
+      <div class="arcade-modal-actions">
+        <a href="game/index.html" target="_blank" rel="noopener noreferrer" class="arcade-action-btn" title="Open in new tab">Full Tab ↗</a>
+        <button id="closeArcadeBtn" class="arcade-action-btn close-btn" title="Close Game (Esc)">✕</button>
+      </div>
+    </div>
+    <div class="arcade-modal-body">
+      <iframe id="arcadeIframe" src="about:blank" data-src="game/index.html" class="arcade-iframe" title="Turbo Drive Arcade Game" allow="autoplay; fullscreen"></iframe>
+    </div>
+  </div>
+</div>
+
+<header>
+  <a class="brand"><span>✦</span> MetaClean <i>PRO</i></a>
+  <div class="header-right">
+    <button id="openArcadeBtn" class="arcade-btn" title="Play Turbo Drive: Highway Fury">🏎️ Play Arcade Game</button>
+    <div class="privacy">🔒 Runs locally</div>
+  </div>
+</header>
 <main>
 <section class="hero">
 <div class="eyebrow">PRIVACY-FIRST IMAGE CLEANER</div>
@@ -48,6 +74,20 @@
 <div><b>XMP / IPTC</b><span>Common editing, author and publishing metadata.</span></div>
 <div><b>APP DATA</b><span>Common JPEG application segments and PNG text metadata.</span></div>
 </div><p class="limit">No browser tool can guarantee removal of every proprietary or steganographic payload. Pixel content is not altered to evade AI detection or provenance systems.</p></section>
+
+<section class="arcade-banner-section">
+  <div class="arcade-banner-card">
+    <div class="arcade-banner-content">
+      <span class="arcade-banner-tag">BUILT-IN RETRO ARCADE</span>
+      <h2>Take a breather with Turbo Drive!</h2>
+      <p>Dodging traffic, firing unlimited rockets, changing gears, and listening to 120BPM synthwave beats right inside MetaClean Pro.</p>
+      <div class="arcade-banner-btns">
+        <button id="arcadeBannerBtn" class="primary-arcade-btn">🏎️ Launch Game</button>
+        <a href="game/index.html" target="_blank" rel="noopener noreferrer" class="secondary-arcade-btn">Open in Dedicated Tab ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
 </main>
 <footer>MetaClean Pro <span>Client-side processing • No uploads</span></footer>
 <script src="app.js"></script>

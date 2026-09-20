@@ -21,3 +21,46 @@ $("#clean").onclick=async()=>{
  try{let img=new Image();img.src=URL.createObjectURL(original);await img.decode();let c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0);let type=original.type==="image/png"?"image/png":"image/jpeg";cleanBlob=await new Promise(r=>c.toBlob(r,type,type==="image/jpeg"?.95:undefined));let after=await scan(new File([cleanBlob],"clean."+ (type==="image/png"?"png":"jpg"),{type}));render($("#after"),after);$("#removed").textContent=$("#count").textContent;$("#remaining").textContent=after.length;$("#resultBadge").textContent=after.length?"Review remaining fields":"Clean";$("#resultBadge").style.color=after.length?"#f2b84b":"#49d39b";$("#result").classList.remove("hidden");$("#result").scrollIntoView({behavior:"smooth",block:"start"})}catch(e){alert("Could not process this image. Try JPEG or PNG.")}finally{b.disabled=false;b.textContent="Clean image"}};
 $("#download").onclick=()=>{if(!cleanBlob)return;let base=original.name.replace(/\.[^.]+$/,"");let ext=original.type==="image/png"?"png":"jpg";let a=document.createElement("a");a.href=URL.createObjectURL(cleanBlob);a.download=base+"-clean."+ext;a.click()};
 $("#reset").onclick=$("#again").onclick=()=>{app.classList.add("hidden");input.value="";original=null;cleanBlob=null;window.scrollTo({top:0,behavior:"smooth"})};
+
+// ============================================================================
+// Turbo Drive Arcade Cabinet Launcher
+// ============================================================================
+const arcadeModal = $("#arcadeModal");
+const arcadeIframe = $("#arcadeIframe");
+
+function openArcade() {
+  if (!arcadeModal) return;
+  arcadeModal.classList.remove("hidden");
+  if (arcadeIframe && arcadeIframe.getAttribute("src") === "about:blank") {
+    arcadeIframe.src = arcadeIframe.getAttribute("data-src") || "game/index.html";
+  }
+  document.body.style.overflow = "hidden";
+}
+
+function closeArcade() {
+  if (!arcadeModal) return;
+  arcadeModal.classList.add("hidden");
+  if (arcadeIframe) {
+    arcadeIframe.src = "about:blank";
+  }
+  document.body.style.overflow = "";
+}
+
+const openBtn = $("#openArcadeBtn");
+if (openBtn) openBtn.onclick = openArcade;
+
+const bannerBtn = $("#arcadeBannerBtn");
+if (bannerBtn) bannerBtn.onclick = openArcade;
+
+const closeBtn = $("#closeArcadeBtn");
+if (closeBtn) closeBtn.onclick = closeArcade;
+
+const backdrop = $("#arcadeBackdrop");
+if (backdrop) backdrop.onclick = closeArcade;
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && arcadeModal && !arcadeModal.classList.contains("hidden")) {
+    closeArcade();
+  }
+});
+
