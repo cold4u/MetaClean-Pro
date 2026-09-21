@@ -6,22 +6,25 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- Cyber Arcade Modal (Turbo Drive: Highway Fury) -->
-<div id="arcadeModal" class="arcade-modal hidden" aria-hidden="true" role="dialog" aria-label="Turbo Drive Arcade">
+<!-- Cyber Arcade Modal (Multi-Game Arcade Hub) -->
+<div id="arcadeModal" class="arcade-modal hidden" aria-hidden="true" role="dialog" aria-label="Cyber Arcade Hub">
   <div class="arcade-modal-backdrop" id="arcadeBackdrop"></div>
   <div class="arcade-modal-dialog">
     <div class="arcade-modal-header">
       <div class="arcade-modal-title">
-        <span class="arcade-tag">ARCADE</span>
-        <span>🏎️ Turbo Drive: Highway Fury</span>
+        <span class="arcade-tag">ARCADE HUB</span>
+        <div class="arcade-tab-bar">
+          <button class="arcade-tab-btn active" id="tabArcadeTurbo" data-src="game/index.html">🏎️ Turbo Drive</button>
+          <button class="arcade-tab-btn" id="tabArcadePuzzle" data-src="puzzle/index.html">🧩 Cyber Circuit</button>
+        </div>
       </div>
       <div class="arcade-modal-actions">
-        <a href="game/index.html" target="_blank" rel="noopener noreferrer" class="arcade-action-btn" title="Open in new tab">Full Tab ↗</a>
-        <button id="closeArcadeBtn" class="arcade-action-btn close-btn" title="Close Game (Esc)">✕</button>
+        <a id="arcadeTabLink" href="game/index.html" target="_blank" rel="noopener noreferrer" class="arcade-action-btn" title="Open in new tab">Full Tab ↗</a>
+        <button id="closeArcadeBtn" class="arcade-action-btn close-btn" title="Close Arcade [Esc]">✕</button>
       </div>
     </div>
     <div class="arcade-modal-body">
-      <iframe id="arcadeIframe" src="about:blank" data-src="game/index.html" class="arcade-iframe" title="Turbo Drive Arcade Game" allow="autoplay; fullscreen"></iframe>
+      <iframe id="arcadeIframe" src="about:blank" data-src="game/index.html" class="arcade-iframe" title="Cyber Arcade Game" allow="autoplay; fullscreen"></iframe>
     </div>
   </div>
 </div>
@@ -29,7 +32,7 @@
 <header>
   <a class="brand"><span>✦</span> MetaClean <i>PRO</i></a>
   <div class="header-right">
-    <button id="openArcadeBtn" class="arcade-btn" title="Play Turbo Drive: Highway Fury">🏎️ Play Arcade Game</button>
+    <button id="openArcadeBtn" class="arcade-btn" title="Play Cyber Arcade Games">🎮 Cyber Arcade Hub</button>
     <div class="privacy">🔒 Runs locally</div>
   </div>
 </header>
@@ -78,12 +81,13 @@
 <section class="arcade-banner-section">
   <div class="arcade-banner-card">
     <div class="arcade-banner-content">
-      <span class="arcade-banner-tag">BUILT-IN RETRO ARCADE</span>
-      <h2>Take a breather with Turbo Drive!</h2>
-      <p>Dodging traffic, firing unlimited rockets, changing gears, and listening to 120BPM synthwave beats right inside MetaClean Pro.</p>
+      <span class="arcade-banner-tag">BUILT-IN RETRO ARCADE HUB</span>
+      <h2>Take a breather with our Arcade Games!</h2>
+      <p>Choose between high-octane traffic combat in <strong>Turbo Drive</strong> or brain-bending progressive puzzle levels in <strong>Cyber Circuit</strong> right inside MetaClean Pro.</p>
       <div class="arcade-banner-btns">
-        <button id="arcadeBannerBtn" class="primary-arcade-btn">🏎️ Launch Game</button>
-        <a href="game/index.html" target="_blank" rel="noopener noreferrer" class="secondary-arcade-btn">Open in Dedicated Tab ↗</a>
+        <button id="arcadeBannerBtn" class="primary-arcade-btn">🏎️ Play Turbo Drive</button>
+        <button id="arcadePuzzleBtn" class="primary-arcade-btn puzzle-btn">🧩 Play Cyber Circuit</button>
+        <a href="puzzle/index.html" target="_blank" rel="noopener noreferrer" class="secondary-arcade-btn">Puzzle Standalone Tab ↗</a>
       </div>
     </div>
   </div>

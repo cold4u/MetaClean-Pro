@@ -12,8 +12,12 @@
 .arcade-modal-backdrop{position:absolute;inset:0;background:rgba(4,5,8,0.85);backdrop-filter:blur(8px)}
 .arcade-modal-dialog{position:relative;z-index:2;width:100%;max-width:900px;height:88vh;max-height:740px;background:#0d0f15;border:1px solid #332d56;border-radius:18px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.8),0 0 40px rgba(123,76,255,0.2)}
 .arcade-modal-header{height:52px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:#141722;border-bottom:1px solid #232736}
-.arcade-modal-title{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:#f1f2f6}
-.arcade-tag{background:#ff2a85;color:#fff;font-size:10px;font-weight:900;padding:3px 7px;border-radius:6px;letter-spacing:.5px}
+.arcade-modal-title{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:700;color:#f1f2f6}
+.arcade-tag{background:linear-gradient(135deg,#ff0055,#bc8cff);color:#fff;font-size:10px;font-weight:900;padding:3px 7px;border-radius:6px;letter-spacing:.5px}
+.arcade-tab-bar{display:inline-flex;background:#0c0f17;border:1px solid #232738;border-radius:8px;padding:2px;gap:2px}
+.arcade-tab-btn{background:transparent;border:0;color:#8a94a6;font-size:12px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;transition:all .15s}
+.arcade-tab-btn:hover{color:#fff}
+.arcade-tab-btn.active{background:#232738;color:#00f0ff;box-shadow:0 0 10px rgba(0,240,255,0.2)}
 .arcade-modal-actions{display:flex;align-items:center;gap:8px}
 .arcade-action-btn{display:inline-flex;align-items:center;font-size:12px;color:#aeb3bd;text-decoration:none;background:#1e2230;border:1px solid #2f3545;padding:6px 10px;border-radius:7px;cursor:pointer;transition:all .15s ease}
 .arcade-action-btn:hover{background:#2b3044;color:#fff;border-color:#49526b}

@@ -23,17 +23,25 @@ $("#download").onclick=()=>{if(!cleanBlob)return;let base=original.name.replace(
 $("#reset").onclick=$("#again").onclick=()=>{app.classList.add("hidden");input.value="";original=null;cleanBlob=null;window.scrollTo({top:0,behavior:"smooth"})};
 
 // ============================================================================
-// Turbo Drive Arcade Cabinet Launcher
+// Cyber Arcade Hub Launcher (Turbo Drive & Cyber Circuit Puzzle)
 // ============================================================================
 const arcadeModal = $("#arcadeModal");
 const arcadeIframe = $("#arcadeIframe");
+const arcadeTabLink = $("#arcadeTabLink");
+const tabTurbo = $("#tabArcadeTurbo");
+const tabPuzzle = $("#tabArcadePuzzle");
 
-function openArcade() {
+function switchGame(url) {
+  if (arcadeIframe) arcadeIframe.src = url;
+  if (arcadeTabLink) arcadeTabLink.href = url;
+  if (tabTurbo) tabTurbo.classList.toggle("active", url.includes("game"));
+  if (tabPuzzle) tabPuzzle.classList.toggle("active", url.includes("puzzle"));
+}
+
+function openArcade(gameUrl = "game/index.html") {
   if (!arcadeModal) return;
   arcadeModal.classList.remove("hidden");
-  if (arcadeIframe && arcadeIframe.getAttribute("src") === "about:blank") {
-    arcadeIframe.src = arcadeIframe.getAttribute("data-src") || "game/index.html";
-  }
+  switchGame(gameUrl);
   document.body.style.overflow = "hidden";
 }
 
@@ -46,11 +54,17 @@ function closeArcade() {
   document.body.style.overflow = "";
 }
 
+if (tabTurbo) tabTurbo.onclick = () => switchGame("game/index.html");
+if (tabPuzzle) tabPuzzle.onclick = () => switchGame("puzzle/index.html");
+
 const openBtn = $("#openArcadeBtn");
-if (openBtn) openBtn.onclick = openArcade;
+if (openBtn) openBtn.onclick = () => openArcade("game/index.html");
 
 const bannerBtn = $("#arcadeBannerBtn");
-if (bannerBtn) bannerBtn.onclick = openArcade;
+if (bannerBtn) bannerBtn.onclick = () => openArcade("game/index.html");
+
+const puzzleBannerBtn = $("#arcadePuzzleBtn");
+if (puzzleBannerBtn) puzzleBannerBtn.onclick = () => openArcade("puzzle/index.html");
 
 const closeBtn = $("#closeArcadeBtn");
 if (closeBtn) closeBtn.onclick = closeArcade;
@@ -63,4 +77,5 @@ window.addEventListener("keydown", (e) => {
     closeArcade();
   }
 });
+
 

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cyber Circuit: Mainframe Breach | Logic Puzzle</title>
+  <meta name="description" content="Cyberpunk logic puzzle game with progressive levels. Route glowing circuit wires to connect matching terminals and breach the mainframe.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="puzzle-container">
+    
+    <!-- Top HUD / Level Bar -->
+    <header class="hud-header">
+      <div class="hud-top-row">
+        <div class="level-badge">
+          <h1 id="levelTitle">LEVEL 1: SIGNAL HANDSHAKE</h1>
+          <span class="level-tier-tag" id="levelTier">Tier 1: Junior Hacker • 4×4 Grid</span>
+        </div>
+        <div class="hud-stars" id="levelStarsHeader" title="Level Rating">☆☆☆</div>
+      </div>
+
+      <div class="hud-stats-row">
+        <div class="stat-item">
+          <span class="stat-lbl">Moves</span>
+          <span class="stat-val" id="moveCounter">0</span>
+        </div>
+        <div class="fill-bar-wrap">
+          <span class="stat-lbl">Sync</span>
+          <div class="fill-bar-outer">
+            <div class="fill-bar-inner" id="fillBar"></div>
+          </div>
+          <span class="stat-val" id="fillPercent">0%</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Circuit Board Grid Container -->
+    <main class="board-wrapper" id="boardWrapper">
+      <div class="circuit-board" id="circuitBoard"></div>
+    </main>
+
+    <!-- Controls Bar -->
+    <footer class="controls-bar" id="controlsBar">
+      <button id="btnLevelSelect" class="ctrl-btn prime" aria-label="Level Select">🗂️ Levels</button>
+      <button id="btnUndo" class="ctrl-btn" aria-label="Undo Wire">↩ Undo</button>
+      <button id="btnReset" class="ctrl-btn" aria-label="Reset Level">↺ Reset</button>
+      <button id="btnHint" class="ctrl-btn" aria-label="Get Hint">💡 Hint</button>
+      <button id="btnSound" class="ctrl-btn" aria-label="Toggle Sound">🔊 SFX: ON</button>
+    </footer>
+
+  </div>
+
+  <!-- Win Modal Dialog -->
+  <div id="winModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-title" id="winTitle">CIRCUIT SYNCHRONIZED!</div>
+      <div class="modal-stars" id="winStarsDisplay">★★★</div>
+      <div class="modal-stats" id="winStats"></div>
+      <div class="modal-actions">
+        <button id="btnReplayLevel" class="modal-btn secondary">Replay</button>
+        <button id="btnNextLevel" class="modal-btn primary">Next Level ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Level Select Modal Dialog -->
+  <div id="levelModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-dialog level-select-dialog">
+      <div class="modal-title">MAINFRAME SECTORS</div>
+      <p style="font-size: 0.75rem; color: var(--text-dim);">Select a breached sector or solve current level to advance.</p>
+      <div class="level-grid" id="levelGrid"></div>
+      <div class="modal-actions" style="margin-top: 8px;">
+        <button id="btnCloseLevels" class="modal-btn secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Scripts -->
+  <script src="js/levels.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/puzzle.js"></script>
+</body>
+</html>
