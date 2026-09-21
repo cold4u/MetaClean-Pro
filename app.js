@@ -23,13 +23,15 @@ $("#download").onclick=()=>{if(!cleanBlob)return;let base=original.name.replace(
 $("#reset").onclick=$("#again").onclick=()=>{app.classList.add("hidden");input.value="";original=null;cleanBlob=null;window.scrollTo({top:0,behavior:"smooth"})};
 
 // ============================================================================
-// Cyber Arcade Hub Launcher (Turbo Drive & Cyber Circuit Puzzle)
+// Cyber Arcade Hub Launcher (Turbo Drive, Cyber Circuit, Neon Breaker, Cyber Strike)
 // ============================================================================
 const arcadeModal = $("#arcadeModal");
 const arcadeIframe = $("#arcadeIframe");
 const arcadeTabLink = $("#arcadeTabLink");
 const tabTurbo = $("#tabArcadeTurbo");
 const tabPuzzle = $("#tabArcadePuzzle");
+const tabBreaker = $("#tabArcadeBreaker");
+const tabStrike = $("#tabArcadeStrike");
 
 function switchGame(url) {
   const cleanUrl = url.split("?")[0];
@@ -38,6 +40,8 @@ function switchGame(url) {
   if (arcadeTabLink) arcadeTabLink.href = cleanUrl;
   if (tabTurbo) tabTurbo.classList.toggle("active", cleanUrl.includes("game"));
   if (tabPuzzle) tabPuzzle.classList.toggle("active", cleanUrl.includes("puzzle"));
+  if (tabBreaker) tabBreaker.classList.toggle("active", cleanUrl.includes("breaker"));
+  if (tabStrike) tabStrike.classList.toggle("active", cleanUrl.includes("strike"));
 }
 
 function openArcade(gameUrl = "game/index.html") {
@@ -58,6 +62,8 @@ function closeArcade() {
 
 if (tabTurbo) tabTurbo.onclick = () => switchGame("game/index.html");
 if (tabPuzzle) tabPuzzle.onclick = () => switchGame("puzzle/index.html");
+if (tabBreaker) tabBreaker.onclick = () => switchGame("breaker/index.html");
+if (tabStrike) tabStrike.onclick = () => switchGame("strike/index.html");
 
 const openBtn = $("#openArcadeBtn");
 if (openBtn) openBtn.onclick = () => openArcade("game/index.html");
@@ -67,6 +73,12 @@ if (bannerBtn) bannerBtn.onclick = () => openArcade("game/index.html");
 
 const puzzleBannerBtn = $("#arcadePuzzleBtn");
 if (puzzleBannerBtn) puzzleBannerBtn.onclick = () => openArcade("puzzle/index.html");
+
+const breakerBannerBtn = $("#arcadeBreakerBtn");
+if (breakerBannerBtn) breakerBannerBtn.onclick = () => openArcade("breaker/index.html");
+
+const strikeBannerBtn = $("#arcadeStrikeBtn");
+if (strikeBannerBtn) strikeBannerBtn.onclick = () => openArcade("strike/index.html");
 
 const closeBtn = $("#closeArcadeBtn");
 if (closeBtn) closeBtn.onclick = closeArcade;

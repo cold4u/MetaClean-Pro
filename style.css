@@ -14,7 +14,7 @@
 .arcade-modal-header{height:52px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:#141722;border-bottom:1px solid #232736}
 .arcade-modal-title{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:700;color:#f1f2f6}
 .arcade-tag{background:linear-gradient(135deg,#ff0055,#bc8cff);color:#fff;font-size:10px;font-weight:900;padding:3px 7px;border-radius:6px;letter-spacing:.5px}
-.arcade-tab-bar{display:inline-flex;background:#0c0f17;border:1px solid #232738;border-radius:8px;padding:2px;gap:2px}
+.arcade-tab-bar{display:inline-flex;background:#0c0f17;border:1px solid #232738;border-radius:8px;padding:2px;gap:2px;overflow-x:auto;max-width:100%;white-space:nowrap;-webkit-overflow-scrolling:touch}
 .arcade-tab-btn{background:transparent;border:0;color:#8a94a6;font-size:12px;font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;transition:all .15s}
 .arcade-tab-btn:hover{color:#fff}
 .arcade-tab-btn.active{background:#232738;color:#00f0ff;box-shadow:0 0 10px rgba(0,240,255,0.2)}
@@ -33,7 +33,13 @@
 .arcade-banner-card p{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 20px;max-width:580px}
 .arcade-banner-btns{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .primary-arcade-btn{background:linear-gradient(135deg,#ff2a85 0%,#7b2cbf 100%);color:#fff;font-weight:800;font-size:14px;padding:12px 22px;border-radius:10px;cursor:pointer;border:none;box-shadow:0 4px 15px rgba(255,42,133,0.4);transition:all .2s ease}
+.primary-arcade-btn.puzzle-btn{background:linear-gradient(135deg,#00b4d8 0%,#00f0ff 100%);color:#050a14;box-shadow:0 4px 15px rgba(0,240,255,0.35)}
+.primary-arcade-btn.breaker-btn{background:linear-gradient(135deg,#ff9e00 0%,#ff5400 100%);color:#fff;box-shadow:0 4px 15px rgba(255,158,0,0.35)}
+.primary-arcade-btn.strike-btn{background:linear-gradient(135deg,#9d4edd 0%,#3a0ca3 100%);color:#fff;box-shadow:0 4px 15px rgba(157,78,221,0.35)}
 .primary-arcade-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,42,133,0.6)}
+.primary-arcade-btn.puzzle-btn:hover{box-shadow:0 6px 20px rgba(0,240,255,0.55)}
+.primary-arcade-btn.breaker-btn:hover{box-shadow:0 6px 20px rgba(255,158,0,0.55)}
+.primary-arcade-btn.strike-btn:hover{box-shadow:0 6px 20px rgba(157,78,221,0.55)}
 .secondary-arcade-btn{color:#aeb3bd;font-size:13px;text-decoration:none;background:#181b24;border:1px solid #282c39;padding:11px 18px;border-radius:10px;transition:all .15s ease}
 .secondary-arcade-btn:hover{color:#fff;background:#232735;border-color:#40465c}
 @media(max-width:750px){.header-right{gap:10px}.arcade-btn{font-size:11px;padding:6px 10px}.arcade-banner-card{flex-direction:column;text-align:center}.arcade-banner-card p{margin-left:auto;margin-right:auto}.arcade-banner-btns{justify-content:center}}

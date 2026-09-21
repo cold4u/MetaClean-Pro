@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Neon Breaker: Quantum Void | Cyberpunk Brick Breaker</title>
+  <meta name="description" content="Adrenaline-fueled retro-cyberpunk brick breaker with physics deflections, laser cannons, multiball, explosive plasma balls, and 15 sectors.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧱</text></svg>">
+  <link rel="stylesheet" href="style.css?v=4.0">
+</head>
+<body>
+
+  <div class="game-container">
+    
+    <!-- TOP HUD -->
+    <header class="hud-bar">
+      <div class="hud-col">
+        <span class="hud-lbl">SECTOR</span>
+        <span class="hud-val highlight" id="levelDisplay">Quantum Gate</span>
+      </div>
+      <div class="hud-col center">
+        <span class="hud-lbl">SCORE</span>
+        <span class="hud-val" id="scoreDisplay">0</span>
+      </div>
+      <div class="hud-col">
+        <span class="hud-lbl">BEST</span>
+        <span class="hud-val gold" id="highScoreDisplay">0</span>
+      </div>
+    </header>
+
+    <!-- SECONDARY STATUS ROW -->
+    <div class="sub-hud-bar">
+      <div class="stat-pill">
+        <span>LIVES:</span>
+        <span id="livesDisplay">❤️❤️❤️</span>
+      </div>
+      <div class="stat-pill">
+        <span>COMBO:</span>
+        <b id="comboDisplay">1.0x</b>
+      </div>
+      <button id="btnSound" class="hud-btn">🔊 SFX: ON</button>
+      <button id="btnPause" class="hud-btn">⏸ Pause</button>
+    </div>
+
+    <!-- CANVAS WRAPPER -->
+    <main class="canvas-wrap" id="canvasWrap">
+      <canvas id="breakerCanvas" width="480" height="680"></canvas>
+    </main>
+
+    <!-- BOTTOM MOBILE & ACCESSIBILITY CONTROLS -->
+    <footer class="controls-bar">
+      <button id="btnLaunch" class="ctrl-btn prime">🚀 Launch / Action</button>
+      <button id="btnFire" class="ctrl-btn laser-btn">⚡ Fire Laser</button>
+      <button id="btnLevelSelect" class="ctrl-btn">🗂️ Sectors</button>
+    </footer>
+
+  </div>
+
+  <!-- GAME OVER / VICTORY MODAL -->
+  <div id="breakerModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header-deco">✦ QUANTUM BREAKER SYSTEM ✦</div>
+      <div class="modal-title" id="modalTitle">SECTOR BREACHED!</div>
+      <div class="modal-stats" id="modalStats"></div>
+      <div class="modal-actions">
+        <button id="btnModalLevels" class="modal-btn secondary">Sectors</button>
+        <button id="btnModalAction" class="modal-btn primary">Next Sector ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEVEL SELECT MODAL -->
+  <div id="levelSelectModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-dialog level-dialog">
+      <div class="modal-title">QUANTUM SECTORS</div>
+      <p style="font-size: 0.72rem; color: var(--text-dim); margin-top: -6px;">Select an unlocked sector to initiate breach.</p>
+      <div class="level-grid" id="levelSelectGrid"></div>
+      <div class="modal-actions" style="margin-top: 8px;">
+        <button id="btnCloseLevelSelect" class="modal-btn primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/levels.js?v=4.0"></script>
+  <script src="js/audio.js?v=4.0"></script>
+  <script src="js/breaker.js?v=4.0"></script>
+</body>
+</html>

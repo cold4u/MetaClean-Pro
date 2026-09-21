@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cyber Strike: Void Invaders | Neon Space Bullet Storm</title>
+  <meta name="description" content="High-octane retro cyberpunk vertical shoot-em-up with dynamic weapon spreads, EMP shockwaves, dreadnought bosses, and synth audio.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+  <link rel="stylesheet" href="style.css?v=4.0">
+</head>
+<body>
+
+  <div class="game-container">
+    
+    <!-- TOP HUD -->
+    <header class="hud-bar">
+      <div class="hud-col">
+        <span class="hud-lbl">SECTOR WAVE</span>
+        <span class="hud-val highlight" id="waveDisplay">WAVE 1</span>
+      </div>
+      <div class="hud-col center">
+        <span class="hud-lbl">SCORE</span>
+        <span class="hud-val" id="scoreDisplay">0</span>
+      </div>
+      <div class="hud-col">
+        <span class="hud-lbl">BEST</span>
+        <span class="hud-val gold" id="highScoreDisplay">0</span>
+      </div>
+    </header>
+
+    <!-- STATUS BARS & QUICK ACTIONS -->
+    <div class="sub-hud-bar">
+      <div class="meter-group">
+        <div class="meter-item">
+          <span class="meter-lbl">SHD</span>
+          <div class="meter-track"><div id="shieldFill" class="meter-fill shield" style="width: 100%;"></div></div>
+        </div>
+        <div class="meter-item">
+          <span class="meter-lbl">HULL</span>
+          <div class="meter-track"><div id="healthFill" class="meter-fill health" style="width: 100%;"></div></div>
+        </div>
+      </div>
+      <div class="stat-pill" id="bombCountDisplay">💣 × 2</div>
+      <button id="btnSound" class="hud-btn">🔊 SFX: ON</button>
+      <button id="btnPause" class="hud-btn">⏸ Pause</button>
+    </div>
+
+    <!-- CANVAS WRAPPER -->
+    <main class="canvas-wrap" id="canvasWrap">
+      <canvas id="strikeCanvas" width="480" height="700"></canvas>
+      
+      <!-- BOSS WARNING ALERT -->
+      <div id="bossWarning" class="boss-warning hidden">
+        <div class="warning-title">⚠️ WARNING ⚠️</div>
+        <div class="warning-sub">DREADNOUGHT DETECTED IN SECTOR</div>
+      </div>
+    </main>
+
+    <!-- BOTTOM MOBILE & ACCESSIBILITY CONTROLS -->
+    <footer class="controls-bar">
+      <button id="btnBomb" class="ctrl-btn bomb-btn">
+        <span class="btn-icon">💣</span>
+        <span class="btn-text">EMP Shockwave (<kbd>Space</kbd> / Double Tap)</span>
+      </button>
+    </footer>
+
+  </div>
+
+  <!-- START MISSION MODAL -->
+  <div id="startScreen" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header-deco">✦ STARFLEET COMBAT SIMULATOR ✦</div>
+      <div class="modal-title">CYBER STRIKE</div>
+      <div class="modal-subtitle">VOID INVADERS</div>
+      
+      <div class="intel-box">
+        <div class="intel-row">
+          <span class="intel-icon">🕹️</span>
+          <span><b>Drag / Keys:</b> Smooth touch glide or WASD / Arrow keys</span>
+        </div>
+        <div class="intel-row">
+          <span class="intel-icon">⚡</span>
+          <span><b>Auto-Blasters:</b> Continuous fire — collect power orbs to reach Tier 4 Plasma Spread</span>
+        </div>
+        <div class="intel-row">
+          <span class="intel-icon">💣</span>
+          <span><b>EMP Shockwave:</b> Clears screen of enemy projectiles and inflicts massive area damage</span>
+        </div>
+        <div class="intel-row">
+          <span class="intel-icon">👾</span>
+          <span><b>Dreadnoughts:</b> Multi-phase bosses await in deep hyperspace sectors</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnStartGame" class="modal-btn primary">ENGAGE WARP DRIVE ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME OVER MODAL -->
+  <div id="gameOverModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header-deco">✦ SYSTEM DIAGNOSTIC ✦</div>
+      <div class="modal-title danger">SHIP DESTROYED</div>
+      
+      <div class="score-summary">
+        <div class="summary-lbl">FINAL FLIGHT RECORD</div>
+        <div class="summary-val" id="finalScoreDisplay">0</div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnRestartGame" class="modal-btn primary">REDEPLOY FIGHTER ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/audio.js?v=4.0"></script>
+  <script src="js/strike.js?v=4.0"></script>
+</body>
+</html>
