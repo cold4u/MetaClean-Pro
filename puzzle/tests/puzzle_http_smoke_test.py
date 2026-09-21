@@ -7,7 +7,7 @@ import socketserver
 import threading
 import urllib.request
 
-PORT = 8092
+PORT = 0
 DIRECTORY = "/home/shubhamkumarpatel9911/.gemini/antigravity/scratch/puzzle"
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -17,10 +17,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass
 
 def run():
-    server = socketserver.TCPServer(("", PORT), Handler)
+    server = socketserver.TCPServer(("", PORT), Handler, bind_and_activate=False)
+    server.allow_reuse_address = True
+    server.server_bind()
+    server.server_activate()
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    print(f"Server started on port {PORT}")
+    print(f"Server started on port {server.server_address[1]}")
 
     endpoints = [
         ("/", "text/html"),
@@ -32,7 +35,7 @@ def run():
     ]
 
     for ep, exp_mime in endpoints:
-        url = f"http://localhost:{PORT}{ep}"
+        url = f"http://localhost:{server.server_address[1]}{ep}"
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req) as resp:
             assert resp.status == 200, f"Failed on {ep}: status {resp.status}"

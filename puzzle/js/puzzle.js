@@ -19,9 +19,15 @@ class CyberCircuit {
     this.electronPhase = 0;
     this.fxParticles = [];
 
-    // Storage
-    this.unlockedLevel = parseInt(this.storageGet("cc_unlocked_level", "1"), 10);
-    this.levelStars = JSON.parse(this.storageGet("cc_level_stars", "{}"));
+    // Safe Storage Initialization
+    const rawLvl = parseInt(this.storageGet("cc_unlocked_level", "1"), 10);
+    this.unlockedLevel = (!isNaN(rawLvl) && rawLvl >= 1) ? rawLvl : 1;
+    try {
+      const rawStars = this.storageGet("cc_level_stars", "{}");
+      this.levelStars = typeof rawStars === "string" ? JSON.parse(rawStars) : (rawStars || {});
+    } catch (_) {
+      this.levelStars = {};
+    }
 
     this.initDOM();
     this.initCanvas();
@@ -873,9 +879,26 @@ class CyberCircuit {
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  window.cyberCircuitInstance = new CyberCircuit();
-});
+function launchCyberCircuit() {
+  if (!window.cyberCircuitInstance) {
+    try {
+      window.cyberCircuitInstance = new CyberCircuit();
+      console.log("Cyber Circuit initialized successfully!");
+    } catch (err) {
+      console.error("Failed to initialize Cyber Circuit:", err);
+    }
+  }
+}
+
+if (typeof document !== "undefined") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", launchCyberCircuit);
+  } else {
+    // DOM already loaded (e.g. inside iframe or fast parse)
+    launchCyberCircuit();
+  }
+  window.addEventListener("load", launchCyberCircuit);
+}
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { CyberCircuit };

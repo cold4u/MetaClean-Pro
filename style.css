@@ -23,8 +23,8 @@
 .arcade-action-btn:hover{background:#2b3044;color:#fff;border-color:#49526b}
 .arcade-action-btn.close-btn{font-weight:800;color:#ff6b8b;border-color:#5c1f30}
 .arcade-action-btn.close-btn:hover{background:#4a1322;color:#ff99b0;border-color:#8c253f}
-.arcade-modal-body{flex:1;width:100%;height:100%;background:#000;position:relative}
-.arcade-iframe{width:100%;height:100%;border:none;display:block}
+.arcade-modal-body{flex:1 1 0%;min-height:0;width:100%;background:#000;position:relative}
+.arcade-iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;display:block}
 .arcade-banner-section{margin-top:50px}
 .arcade-banner-card{border:1px solid #332d56;background:linear-gradient(135deg,#131122 0%,#0d0f15 100%);border-radius:20px;padding:35px 30px;display:flex;align-items:center;justify-content:space-between;gap:30px;box-shadow:0 0 35px rgba(123,76,255,0.15)}
 .arcade-banner-content{flex:1}

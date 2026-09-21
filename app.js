@@ -32,10 +32,12 @@ const tabTurbo = $("#tabArcadeTurbo");
 const tabPuzzle = $("#tabArcadePuzzle");
 
 function switchGame(url) {
-  if (arcadeIframe) arcadeIframe.src = url;
-  if (arcadeTabLink) arcadeTabLink.href = url;
-  if (tabTurbo) tabTurbo.classList.toggle("active", url.includes("game"));
-  if (tabPuzzle) tabPuzzle.classList.toggle("active", url.includes("puzzle"));
+  const cleanUrl = url.split("?")[0];
+  const cacheBusted = cleanUrl + "?t=" + Date.now();
+  if (arcadeIframe) arcadeIframe.src = cacheBusted;
+  if (arcadeTabLink) arcadeTabLink.href = cleanUrl;
+  if (tabTurbo) tabTurbo.classList.toggle("active", cleanUrl.includes("game"));
+  if (tabPuzzle) tabPuzzle.classList.toggle("active", cleanUrl.includes("puzzle"));
 }
 
 function openArcade(gameUrl = "game/index.html") {
