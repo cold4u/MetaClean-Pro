@@ -105,6 +105,11 @@ class CyberCircuit {
     this.fxCtx = this.fxCanvas.getContext("2d");
     this.resizeCanvas();
     window.addEventListener("resize", () => this.resizeCanvas());
+    if (typeof ResizeObserver !== "undefined" && this.dom.boardWrapper) {
+      try {
+        new ResizeObserver(() => this.resizeCanvas()).observe(this.dom.boardWrapper);
+      } catch (_) {}
+    }
   }
 
   resizeCanvas() {
@@ -119,15 +124,21 @@ class CyberCircuit {
     this.canvas.height = h * dpr;
     this.canvas.style.width = `${w}px`;
     this.canvas.style.height = `${h}px`;
-    this.ctx.resetTransform();
-    this.ctx.scale(dpr, dpr);
+    if (this.ctx.setTransform) {
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    } else {
+      this.ctx.scale(dpr, dpr);
+    }
 
     this.fxCanvas.width = w * dpr;
     this.fxCanvas.height = h * dpr;
     this.fxCanvas.style.width = `${w}px`;
     this.fxCanvas.style.height = `${h}px`;
-    this.fxCtx.resetTransform();
-    this.fxCtx.scale(dpr, dpr);
+    if (this.fxCtx.setTransform) {
+      this.fxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    } else {
+      this.fxCtx.scale(dpr, dpr);
+    }
 
     this.drawWires();
   }
@@ -339,7 +350,7 @@ class CyberCircuit {
         const data = this.grid[r][c];
         if (data.type === "blocker") {
           cell.classList.add("blocker");
-          cell.innerHTML = "<span class="blocker-icon">✕</span>";
+          cell.innerHTML = '<span class="blocker-icon">✕</span>';
         } else if (data.type === "endpoint") {
           cell.classList.add("endpoint", `c-${data.color}`);
           const def = COLOR_DEFS[data.color] || { hex: "#fff", glow: "#fff" };
