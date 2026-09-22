@@ -23,25 +23,39 @@ $("#download").onclick=()=>{if(!cleanBlob)return;let base=original.name.replace(
 $("#reset").onclick=$("#again").onclick=()=>{app.classList.add("hidden");input.value="";original=null;cleanBlob=null;window.scrollTo({top:0,behavior:"smooth"})};
 
 // ============================================================================
-// Cyber Arcade Hub Launcher (Turbo Drive, Cyber Circuit, Neon Breaker, Cyber Strike)
+// Cyber Arcade Hub Launcher (9-Game Arcade Cabinet)
 // ============================================================================
 const arcadeModal = $("#arcadeModal");
 const arcadeIframe = $("#arcadeIframe");
 const arcadeTabLink = $("#arcadeTabLink");
-const tabTurbo = $("#tabArcadeTurbo");
-const tabPuzzle = $("#tabArcadePuzzle");
-const tabBreaker = $("#tabArcadeBreaker");
-const tabStrike = $("#tabArcadeStrike");
+
+const tabs = {
+  turbo: $("#tabArcadeTurbo"),
+  puzzle: $("#tabArcadePuzzle"),
+  breaker: $("#tabArcadeBreaker"),
+  strike: $("#tabArcadeStrike"),
+  snake: $("#tabArcadeSnake"),
+  jump: $("#tabArcadeJump"),
+  pulse: $("#tabArcadePulse"),
+  runner: $("#tabArcadeRunner"),
+  defense: $("#tabArcadeDefense")
+};
 
 function switchGame(url) {
   const cleanUrl = url.split("?")[0];
   const cacheBusted = cleanUrl + "?t=" + Date.now();
   if (arcadeIframe) arcadeIframe.src = cacheBusted;
   if (arcadeTabLink) arcadeTabLink.href = cleanUrl;
-  if (tabTurbo) tabTurbo.classList.toggle("active", cleanUrl.includes("game"));
-  if (tabPuzzle) tabPuzzle.classList.toggle("active", cleanUrl.includes("puzzle"));
-  if (tabBreaker) tabBreaker.classList.toggle("active", cleanUrl.includes("breaker"));
-  if (tabStrike) tabStrike.classList.toggle("active", cleanUrl.includes("strike"));
+  
+  if (tabs.turbo) tabs.turbo.classList.toggle("active", cleanUrl.includes("game"));
+  if (tabs.puzzle) tabs.puzzle.classList.toggle("active", cleanUrl.includes("puzzle"));
+  if (tabs.breaker) tabs.breaker.classList.toggle("active", cleanUrl.includes("breaker"));
+  if (tabs.strike) tabs.strike.classList.toggle("active", cleanUrl.includes("strike"));
+  if (tabs.snake) tabs.snake.classList.toggle("active", cleanUrl.includes("snake"));
+  if (tabs.jump) tabs.jump.classList.toggle("active", cleanUrl.includes("jump"));
+  if (tabs.pulse) tabs.pulse.classList.toggle("active", cleanUrl.includes("pulse"));
+  if (tabs.runner) tabs.runner.classList.toggle("active", cleanUrl.includes("runner"));
+  if (tabs.defense) tabs.defense.classList.toggle("active", cleanUrl.includes("defense"));
 }
 
 function openArcade(gameUrl = "game/index.html") {
@@ -60,25 +74,38 @@ function closeArcade() {
   document.body.style.overflow = "";
 }
 
-if (tabTurbo) tabTurbo.onclick = () => switchGame("game/index.html");
-if (tabPuzzle) tabPuzzle.onclick = () => switchGame("puzzle/index.html");
-if (tabBreaker) tabBreaker.onclick = () => switchGame("breaker/index.html");
-if (tabStrike) tabStrike.onclick = () => switchGame("strike/index.html");
+// Tab Clicks
+if (tabs.turbo) tabs.turbo.onclick = () => switchGame("game/index.html");
+if (tabs.puzzle) tabs.puzzle.onclick = () => switchGame("puzzle/index.html");
+if (tabs.breaker) tabs.breaker.onclick = () => switchGame("breaker/index.html");
+if (tabs.strike) tabs.strike.onclick = () => switchGame("strike/index.html");
+if (tabs.snake) tabs.snake.onclick = () => switchGame("snake/index.html");
+if (tabs.jump) tabs.jump.onclick = () => switchGame("jump/index.html");
+if (tabs.pulse) tabs.pulse.onclick = () => switchGame("pulse/index.html");
+if (tabs.runner) tabs.runner.onclick = () => switchGame("runner/index.html");
+if (tabs.defense) tabs.defense.onclick = () => switchGame("defense/index.html");
 
+// Header Button
 const openBtn = $("#openArcadeBtn");
 if (openBtn) openBtn.onclick = () => openArcade("game/index.html");
 
-const bannerBtn = $("#arcadeBannerBtn");
-if (bannerBtn) bannerBtn.onclick = () => openArcade("game/index.html");
+// Banner Buttons
+const bannerBindings = [
+  { id: "#arcadeBannerBtn", url: "game/index.html" },
+  { id: "#arcadePuzzleBtn", url: "puzzle/index.html" },
+  { id: "#arcadeBreakerBtn", url: "breaker/index.html" },
+  { id: "#arcadeStrikeBtn", url: "strike/index.html" },
+  { id: "#arcadeSnakeBtn", url: "snake/index.html" },
+  { id: "#arcadeJumpBtn", url: "jump/index.html" },
+  { id: "#arcadePulseBtn", url: "pulse/index.html" },
+  { id: "#arcadeRunnerBtn", url: "runner/index.html" },
+  { id: "#arcadeDefenseBtn", url: "defense/index.html" }
+];
 
-const puzzleBannerBtn = $("#arcadePuzzleBtn");
-if (puzzleBannerBtn) puzzleBannerBtn.onclick = () => openArcade("puzzle/index.html");
-
-const breakerBannerBtn = $("#arcadeBreakerBtn");
-if (breakerBannerBtn) breakerBannerBtn.onclick = () => openArcade("breaker/index.html");
-
-const strikeBannerBtn = $("#arcadeStrikeBtn");
-if (strikeBannerBtn) strikeBannerBtn.onclick = () => openArcade("strike/index.html");
+bannerBindings.forEach(({ id, url }) => {
+  const btn = $(id);
+  if (btn) btn.onclick = () => openArcade(url);
+});
 
 const closeBtn = $("#closeArcadeBtn");
 if (closeBtn) closeBtn.onclick = closeArcade;
