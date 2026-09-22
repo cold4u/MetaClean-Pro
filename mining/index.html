@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Deep Core: Nano Drill | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>⛏️</span>
+            <span>DEEP CORE DRILL</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="upgrades-container">
+            <button id="up-drill" class="upgrade-btn">⚡ Drill Bit ($120)</button>
+            <button id="up-fuel" class="upgrade-btn">⛽ Fuel Tank ($90)</button>
+            <button id="up-cargo" class="upgrade-btn">📦 Cargo Bay ($100)</button>
+            <button id="up-hull" class="upgrade-btn">🛡️ Hull Armor ($80)</button>
+        </div>
+
+        <div id="touch-controls">
+            <div class="touch-cluster">
+                <button id="touch-left" class="touch-btn">◀</button>
+                <button id="touch-right" class="touch-btn">▶</button>
+            </div>
+            <div class="touch-cluster">
+                <button id="touch-down" class="touch-btn">▼ DIG</button>
+                <button id="touch-up" class="touch-btn">▲ FLY</button>
+            </div>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> <b>A/D or ←/→</b>: Steer & Drill Sideways &bull; <b>S or ↓</b>: Drill Downwards &bull; <b>W or ↑ (Hold)</b>: Jet Thrusters (Fly up). Return to surface to sell ore & refuel! Reach depth 310m to extract the <b>Ancient Core</b>!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/mining.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new MiningAudio();
+        const engine = new MiningEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) engine.keys.left = true;
+            if (['ArrowRight', 'KeyD'].includes(e.code)) engine.keys.right = true;
+            if (['ArrowUp', 'KeyW'].includes(e.code)) engine.keys.up = true;
+            if (['ArrowDown', 'KeyS'].includes(e.code)) engine.keys.down = true;
+
+            if (e.code === 'Space' && engine.victory) {
+                engine.generateWorld();
+                engine.player.x = 7 * engine.tileSize + 6;
+                engine.player.y = 0;
+                engine.player.fuel = engine.player.maxFuel;
+                engine.player.hp = engine.player.maxHp;
+                engine.player.cargo = [];
+                engine.victory = false;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) engine.keys.left = false;
+            if (['ArrowRight', 'KeyD'].includes(e.code)) engine.keys.right = false;
+            if (['ArrowUp', 'KeyW'].includes(e.code)) engine.keys.up = false;
+            if (['ArrowDown', 'KeyS'].includes(e.code)) engine.keys.down = false;
+        });
+
+        // Touch Control Binds
+        const bindHold = (id, prop) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const start = (e) => {
+                e.preventDefault();
+                audio.init();
+                engine.keys[prop] = true;
+            };
+            const end = (e) => {
+                e.preventDefault();
+                engine.keys[prop] = false;
+            };
+            el.addEventListener('touchstart', start, { passive: false });
+            el.addEventListener('touchend', end, { passive: false });
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', end);
+        };
+
+        bindHold('touch-left', 'left');
+        bindHold('touch-right', 'right');
+        bindHold('touch-up', 'up');
+        bindHold('touch-down', 'down');
+
+        // Upgrade Buttons
+        const bindUpgrade = (id, key) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.addEventListener('click', () => {
+                audio.init();
+                engine.buyUpgrade(key);
+                updateUpgradeButtons();
+            });
+        };
+
+        bindUpgrade('up-drill', 'drill');
+        bindUpgrade('up-fuel', 'fuel');
+        bindUpgrade('up-cargo', 'cargo');
+        bindUpgrade('up-hull', 'hull');
+
+        function updateUpgradeButtons() {
+            ['drill', 'fuel', 'cargo', 'hull'].forEach(k => {
+                const up = engine.upgrades[k];
+                const btn = document.getElementById(`up-${k}`);
+                if (btn) {
+                    btn.textContent = up.level >= up.max ? `${up.name} (MAX)` : `${up.name} ($${up.cost})`;
+                    btn.style.opacity = (engine.player.credits >= up.cost && up.level < up.max) ? '1' : '0.6';
+                }
+            });
+        }
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            updateUpgradeButtons();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

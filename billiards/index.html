@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Pool: Cyber Cue | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>🎱</span>
+            <span>NEON POOL</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="power-container">
+            <span class="power-label">POWER:</span>
+            <input type="range" id="powerSlider" class="power-slider" min="10" max="100" value="50">
+            <button id="btnShoot" class="shoot-btn">STRIKE CUE</button>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> Aim with <b>Mouse / Touch</b> on table &bull; Adjust <b>Power Slider</b> or drag backwards &bull; Click <b>STRIKE CUE</b> or press <b>SPACE</b> to shoot. Pocket the <b>Gold 9-Ball</b> to win!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/billiards.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new BilliardsAudio();
+        const engine = new BilliardsEngine(canvas, audio);
+        const powerSlider = document.getElementById('powerSlider');
+        const btnShoot = document.getElementById('btnShoot');
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        // Pointer Aiming
+        function updateAim(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const mx = (clientX - rect.left) * scaleX;
+            const my = (clientY - rect.top) * scaleY;
+
+            if (engine.cueBall && engine.cueBall.active) {
+                engine.aimAngle = Math.atan2(my - engine.cueBall.y, mx - engine.cueBall.x);
+                engine.isAiming = true;
+            }
+        }
+
+        canvas.addEventListener('mousemove', (e) => updateAim(e.clientX, e.clientY));
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const t = e.touches[0];
+            updateAim(t.clientX, t.clientY);
+        }, { passive: false });
+
+        // Shoot action
+        function doShoot() {
+            audio.init();
+            if (engine.victory) {
+                engine.initRack();
+                engine.score = 0;
+                engine.shotsTaken = 0;
+                engine.ballsPocketedCount = 0;
+                engine.victory = false;
+                return;
+            }
+            if (engine.allStopped()) {
+                const powerRatio = parseInt(powerSlider.value) / 100;
+                engine.strikeCue(powerRatio, engine.aimAngle);
+            }
+        }
+
+        btnShoot.addEventListener('click', doShoot);
+        canvas.addEventListener('click', () => {
+            if (engine.victory) doShoot();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (e.code === 'Space') {
+                doShoot();
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.power = parseInt(powerSlider.value) / 100;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

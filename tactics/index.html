@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber Tactics: Mech Warfare | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>🤖</span>
+            <span>CYBER TACTICS</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="instructions-card">
+            <strong>How to Play:</strong> Click / Tap a Mech to select &bull; <b>Cyan tiles</b> show valid Moves &bull; <b>Red tiles</b> show Attack range &bull; Position adjacent to <b>Cover Blocks</b> for 40% damage resistance. Protect the <b>⚡ Power Pylon</b> and eliminate all hostiles!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/tactics.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new TacticsAudio();
+        const engine = new TacticsEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        function handlePointer(clientX, clientY) {
+            audio.init();
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const cx = (clientX - rect.left) * scaleX;
+            const cy = (clientY - rect.top) * scaleY;
+
+            if (engine.gameOver || engine.victory) {
+                engine.initMission();
+                return;
+            }
+
+            // Check if clicking End Turn button (px: 510, py: 420, pw: 250, ph: 52)
+            if (cx >= 510 && cx <= 760 && cy >= 420 && cy <= 472) {
+                engine.endPlayerTurn();
+                return;
+            }
+
+            // Check if clicking in 8x8 Grid
+            const gx = cx - engine.gridOffsetX;
+            const gy = cy - engine.gridOffsetY;
+            if (gx >= 0 && gx < engine.gridSize * engine.cellSize && gy >= 0 && gy < engine.gridSize * engine.cellSize) {
+                const c = Math.floor(gx / engine.cellSize);
+                const r = Math.floor(gy / engine.cellSize);
+                engine.selectCell(r, c);
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            handlePointer(e.clientX, e.clientY);
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.touches[0];
+            handlePointer(t.clientX, t.clientY);
+        }, { passive: false });
+
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (e.code === 'Space') {
+                if (engine.gameOver || engine.victory) {
+                    engine.initMission();
+                } else if (engine.turn === 'player') {
+                    engine.endPlayerTurn();
+                }
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

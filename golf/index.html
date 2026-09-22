@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quantum Mini-Golf: Cyber Greens | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>⛳</span>
+            <span>QUANTUM GOLF</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="instructions-card">
+            <strong>How to Play:</strong> Click / Touch on the ball and <b>drag backward</b> to aim & set stroke power &bull; <b>Release</b> to putt! Navigate through speed boosters, quantum wormholes, and gravity vortices across all 9 holes!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/golf.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new GolfAudio();
+        const engine = new GolfEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        const startDrag = (e) => {
+            if (e.touches) e.preventDefault();
+            audio.init();
+            if (engine.victory) {
+                engine.totalStrokes = 0;
+                engine.scorecard = [];
+                engine.victory = false;
+                engine.loadHole(0);
+                return;
+            }
+            if (!engine.isBallStopped()) return;
+
+            const pos = getCoords(e);
+            const dist = Math.hypot(pos.x - engine.ball.x, pos.y - engine.ball.y);
+            if (dist < 40) {
+                engine.isDragging = true;
+                engine.dragStart = { x: engine.ball.x, y: engine.ball.y };
+                engine.dragCurrent = pos;
+            }
+        };
+
+        const moveDrag = (e) => {
+            if (e.touches) e.preventDefault();
+            if (engine.isDragging) {
+                engine.dragCurrent = getCoords(e);
+            }
+        };
+
+        const endDrag = (e) => {
+            if (e.touches) e.preventDefault();
+            if (engine.isDragging) {
+                engine.isDragging = false;
+                const dx = engine.dragStart.x - engine.dragCurrent.x;
+                const dy = engine.dragStart.y - engine.dragCurrent.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist > 5) {
+                    const power = Math.min(600, dist * 4.5);
+                    const angle = Math.atan2(dy, dx);
+                    engine.putt(Math.cos(angle) * power, Math.sin(angle) * power);
+                }
+            }
+        };
+
+        canvas.addEventListener('mousedown', startDrag);
+        window.addEventListener('mousemove', moveDrag);
+        window.addEventListener('mouseup', endDrag);
+
+        canvas.addEventListener('touchstart', startDrag, { passive: false });
+        window.addEventListener('touchmove', moveDrag, { passive: false });
+        window.addEventListener('touchend', endDrag, { passive: false });
+
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (e.code === 'Space' && engine.victory) {
+                engine.totalStrokes = 0;
+                engine.scorecard = [];
+                engine.victory = false;
+                engine.loadHole(0);
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

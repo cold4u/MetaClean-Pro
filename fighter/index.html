@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber Brawler: Neon Clash | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>🥊</span>
+            <span>CYBER BRAWLER</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="touch-controls">
+            <div class="d-pad">
+                <button id="btn-left" class="ctrl-btn">◀</button>
+                <button id="btn-up" class="ctrl-btn">▲</button>
+                <button id="btn-right" class="ctrl-btn">▶</button>
+            </div>
+            <div class="action-pad">
+                <button id="btn-punch" class="ctrl-btn attack">PUNCH</button>
+                <button id="btn-kick" class="ctrl-btn attack">KICK</button>
+                <button id="btn-fireball" class="ctrl-btn attack">FIRE</button>
+            </div>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> <span>A/D</span> or <span>Left/Right</span> Move &bull; <span>W</span> or <span>Up</span> Jump &bull; <span>J</span> or <span>Z</span> Punch &bull; <span>K</span> or <span>X</span> Kick &bull; <span>L</span> or <span>C</span> Fireball &bull; Hold <span>Back</span> to Block! Best 2 of 3 Rounds to Victory!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/fighter.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new FighterAudio();
+        const engine = new FighterEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        const keyMap = {
+            'ArrowLeft': 'left', 'KeyA': 'left',
+            'ArrowRight': 'right', 'KeyD': 'right',
+            'ArrowUp': 'up', 'KeyW': 'up',
+            'ArrowDown': 'down', 'KeyS': 'down'
+        };
+
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (keyMap[e.code]) {
+                engine.keys[keyMap[e.code]] = true;
+            } else if (e.code === 'KeyJ' || e.code === 'KeyZ') {
+                engine.triggerAction(engine.p1, 'punch');
+            } else if (e.code === 'KeyK' || e.code === 'KeyX') {
+                engine.triggerAction(engine.p1, 'kick');
+            } else if (e.code === 'KeyL' || e.code === 'KeyC') {
+                engine.triggerAction(engine.p1, 'fireball');
+            } else if (e.code === 'Space') {
+                if (engine.roundState === 'match_over') {
+                    engine.p1Wins = 0;
+                    engine.p2Wins = 0;
+                    engine.currentRound = 1;
+                    engine.startRound();
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (keyMap[e.code]) {
+                engine.keys[keyMap[e.code]] = false;
+            }
+        });
+
+        // Touch button handlers
+        function setupTouchButton(id, onDown, onUp) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const start = (e) => { e.preventDefault(); audio.init(); onDown(); };
+            const end = (e) => { e.preventDefault(); if (onUp) onUp(); };
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend', end, { passive: false });
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+        }
+
+        setupTouchButton('btn-left', () => engine.keys.left = true, () => engine.keys.left = false);
+        setupTouchButton('btn-right', () => engine.keys.right = true, () => engine.keys.right = false);
+        setupTouchButton('btn-up', () => { engine.keys.up = true; setTimeout(() => engine.keys.up = false, 150); });
+        setupTouchButton('btn-punch', () => engine.triggerAction(engine.p1, 'punch'));
+        setupTouchButton('btn-kick', () => engine.triggerAction(engine.p1, 'kick'));
+        setupTouchButton('btn-fireball', () => engine.triggerAction(engine.p1, 'fireball'));
+
+        canvas.addEventListener('click', () => {
+            audio.init();
+            if (engine.roundState === 'match_over') {
+                engine.p1Wins = 0;
+                engine.p2Wins = 0;
+                engine.currentRound = 1;
+                engine.startRound();
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

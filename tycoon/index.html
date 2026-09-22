@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber City: Power Grid Builder | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>⚡</span>
+            <span>CYBER CITY TYCOON</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="build-toolbar">
+            <button class="tool-btn active" data-tool="solar">
+                <span>☀️ Solar Farm</span>
+                <span class="cost">150 CR • +35 MW</span>
+            </button>
+            <button class="tool-btn" data-tool="fusion">
+                <span>⚛️ Fusion Core</span>
+                <span class="cost">500 CR • +140 MW</span>
+            </button>
+            <button class="tool-btn" data-tool="conduit">
+                <span>⚡ Conduit</span>
+                <span class="cost">40 CR • Link</span>
+            </button>
+            <button class="tool-btn" data-tool="battery">
+                <span>🔋 Battery Bank</span>
+                <span class="cost">200 CR • 250 MWh</span>
+            </button>
+            <button class="tool-btn" data-tool="residential">
+                <span>🏙️ Cyber Housing</span>
+                <span class="cost">120 CR • +45 CR/t</span>
+            </button>
+            <button class="tool-btn" data-tool="corporate">
+                <span>🏢 Tech Spire</span>
+                <span class="cost">350 CR • +150 CR/t</span>
+            </button>
+            <button class="tool-btn demolish" data-tool="demolish">
+                <span>🔨 Demolish</span>
+                <span class="cost">40% Refund</span>
+            </button>
+        </div>
+
+        <div class="instructions-card">
+            <strong>How to Play:</strong> Select a structure from the toolbar & tap any empty sector to build &bull; Connect power plants to residential/corporate sectors using <b>Power Conduits</b> &bull; Store daylight solar surplus in <b>Battery Banks</b> to prevent nighttime blackouts! Goal: <b>1,200 Population & 3,500 Credits</b>.
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/tycoon.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new TycoonAudio();
+        const engine = new TycoonEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        // Toolbar selection
+        const toolButtons = document.querySelectorAll('.tool-btn');
+        toolButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                audio.init();
+                toolButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                engine.selectedTool = btn.dataset.tool;
+            });
+        });
+
+        function getTileCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const canvasX = (clientX - rect.left) * scaleX;
+            const canvasY = (clientY - rect.top) * scaleY;
+
+            const col = Math.floor((canvasX - engine.offsetX) / engine.tileSize);
+            const row = Math.floor((canvasY - engine.offsetY) / engine.tileSize);
+
+            return { col, row };
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            const { col, row } = getTileCoords(e);
+            if (col >= 0 && col < engine.cols && row >= 0 && row < engine.rows) {
+                engine.hoverTile = { col, row };
+            } else {
+                engine.hoverTile = null;
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            engine.hoverTile = null;
+        });
+
+        const handleInteraction = (e) => {
+            if (e.touches) e.preventDefault();
+            audio.init();
+
+            if (engine.gameState === 'bankrupt' || engine.gameState === 'victory') {
+                engine.credits = 750;
+                engine.population = 0;
+                engine.satisfaction = 100;
+                engine.batteryCharge = 0;
+                engine.initGrid();
+                engine.gameState = 'playing';
+                return;
+            }
+
+            const { col, row } = getTileCoords(e);
+            if (col >= 0 && col < engine.cols && row >= 0 && row < engine.rows) {
+                if (engine.selectedTool === 'demolish') {
+                    engine.demolishAt(col, row);
+                } else {
+                    engine.buildAt(col, row, engine.selectedTool);
+                }
+            }
+        };
+
+        canvas.addEventListener('click', handleInteraction);
+        canvas.addEventListener('touchstart', handleInteraction, { passive: false });
+
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (e.code === 'Space' && (engine.gameState === 'bankrupt' || engine.gameState === 'victory')) {
+                engine.credits = 750;
+                engine.population = 0;
+                engine.satisfaction = 100;
+                engine.batteryCharge = 0;
+                engine.initGrid();
+                engine.gameState = 'playing';
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

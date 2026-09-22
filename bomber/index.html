@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber Bomber: Grid Detonator | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>💣</span>
+            <span>CYBER BOMBER</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="touch-controls">
+            <div class="d-pad">
+                <button id="btn-left" class="ctrl-btn">◀</button>
+                <button id="btn-up" class="ctrl-btn">▲</button>
+                <button id="btn-down" class="ctrl-btn">▼</button>
+                <button id="btn-right" class="ctrl-btn">▶</button>
+            </div>
+            <div class="action-pad">
+                <button id="btn-bomb" class="ctrl-btn bomb">💣 DROP</button>
+            </div>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> <span>WASD / Arrow Keys</span> Move &bull; <span>Space / Enter</span> Drop Bomb! Blast through cyber crates to find powerups (<b>+B</b> Bombs, <b>🔥</b> Blast Range, <b>⚡</b> Speed) and eliminate all 3 enemy cyborgs to rule the grid!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/bomber.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new BomberAudio();
+        const engine = new BomberEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        const keyMap = {
+            'KeyW': 'up', 'ArrowUp': 'up',
+            'KeyS': 'down', 'ArrowDown': 'down',
+            'KeyA': 'left', 'ArrowLeft': 'left',
+            'KeyD': 'right', 'ArrowRight': 'right',
+            'Space': 'bomb', 'Enter': 'bomb'
+        };
+
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (keyMap[e.code]) {
+                engine.keys[keyMap[e.code]] = true;
+            }
+            if (e.code === 'Space' && (engine.gameState === 'game_over' || engine.gameState === 'victory')) {
+                engine.initGrid();
+                engine.initPlayers();
+                engine.gameState = 'playing';
+                engine.roundScore = 0;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (keyMap[e.code]) {
+                engine.keys[keyMap[e.code]] = false;
+            }
+        });
+
+        function setupTouchButton(id, onDown, onUp) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const start = (e) => { e.preventDefault(); audio.init(); onDown(); };
+            const end = (e) => { e.preventDefault(); if (onUp) onUp(); };
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend', end, { passive: false });
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+        }
+
+        setupTouchButton('btn-left', () => engine.keys.left = true, () => engine.keys.left = false);
+        setupTouchButton('btn-right', () => engine.keys.right = true, () => engine.keys.right = false);
+        setupTouchButton('btn-up', () => engine.keys.up = true, () => engine.keys.up = false);
+        setupTouchButton('btn-down', () => engine.keys.down = true, () => engine.keys.down = false);
+        setupTouchButton('btn-bomb', () => { engine.keys.bomb = true; setTimeout(() => engine.keys.bomb = false, 120); });
+
+        canvas.addEventListener('click', () => {
+            audio.init();
+            if (engine.gameState === 'game_over' || engine.gameState === 'victory') {
+                engine.initGrid();
+                engine.initPlayers();
+                engine.gameState = 'playing';
+                engine.roundScore = 0;
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quantum Maze: Cyber Ghost Hunt | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>👾</span>
+            <span>QUANTUM MAZE</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="touch-controls">
+            <div class="d-pad">
+                <button id="btn-up" class="ctrl-btn">▲</button>
+                <button id="btn-left" class="ctrl-btn">◀</button>
+                <button id="btn-down" class="ctrl-btn">▼</button>
+                <button id="btn-right" class="ctrl-btn">▶</button>
+            </div>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> <span>WASD / Arrow Keys</span> to steer &bull; Clear the maze of all Quantum Pellets while dodging the 4 AI cyber ghosts! Collect large <b>Quantum Energizers</b> to turn the tables and hunt the ghosts for massive combo bonuses!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/pacman.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new PacmanAudio();
+        const engine = new PacmanEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        const keyMap = {
+            'KeyW': { dx: 0, dy: -1 }, 'ArrowUp': { dx: 0, dy: -1 },
+            'KeyS': { dx: 0, dy: 1 },  'ArrowDown': { dx: 0, dy: 1 },
+            'KeyA': { dx: -1, dy: 0 }, 'ArrowLeft': { dx: -1, dy: 0 },
+            'KeyD': { dx: 1, dy: 0 },  'ArrowRight': { dx: 1, dy: 0 }
+        };
+
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (keyMap[e.code]) {
+                engine.setNextDirection(keyMap[e.code].dx, keyMap[e.code].dy);
+            }
+            if (e.code === 'Space' && (engine.gameState === 'game_over' || engine.gameState === 'victory')) {
+                engine.score = 0;
+                engine.lives = 3;
+                engine.initMaze();
+                engine.initPlayer();
+                engine.initGhosts();
+                engine.gameState = 'playing';
+            }
+        });
+
+        function setupTouchButton(id, dx, dy) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const trigger = (e) => {
+                e.preventDefault();
+                audio.init();
+                engine.setNextDirection(dx, dy);
+            };
+            btn.addEventListener('touchstart', trigger, { passive: false });
+            btn.addEventListener('mousedown', trigger);
+        }
+
+        setupTouchButton('btn-up', 0, -1);
+        setupTouchButton('btn-down', 0, 1);
+        setupTouchButton('btn-left', -1, 0);
+        setupTouchButton('btn-right', 1, 0);
+
+        canvas.addEventListener('click', () => {
+            audio.init();
+            if (engine.gameState === 'game_over' || engine.gameState === 'victory') {
+                engine.score = 0;
+                engine.lives = 3;
+                engine.initMaze();
+                engine.initPlayer();
+                engine.initGhosts();
+                engine.gameState = 'playing';
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

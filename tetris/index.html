@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quantum Fall: Cyber Blocks | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>🧱</span>
+            <span>QUANTUM FALL</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="touch-controls">
+            <div class="d-pad">
+                <button id="btn-left" class="ctrl-btn">◀</button>
+                <button id="btn-right" class="ctrl-btn">▶</button>
+                <button id="btn-soft" class="ctrl-btn">▼</button>
+            </div>
+            <div class="action-pad">
+                <button id="btn-rot-ccw" class="ctrl-btn">↺</button>
+                <button id="btn-rot-cw" class="ctrl-btn">↻</button>
+                <button id="btn-hold" class="ctrl-btn">HOLD</button>
+                <button id="btn-drop" class="ctrl-btn hard-drop">DROP</button>
+            </div>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> <span>Left / Right</span> Move &bull; <span>Up / X</span> Rotate CW &bull; <span>Z</span> Rotate CCW &bull; <span>Down</span> Soft Drop &bull; <span>Space</span> Hard Drop &bull; <span>C / Shift</span> Hold Piece! Clear rows to score combos & trigger massive <b>TETRIS! 4-line clears</b>!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/tetris.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new TetrisAudio();
+        const engine = new TetrisEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+                engine.move(-1);
+            } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+                engine.move(1);
+            } else if (e.code === 'ArrowUp' || e.code === 'KeyX') {
+                engine.rotate(1);
+            } else if (e.code === 'KeyZ') {
+                engine.rotate(-1);
+            } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                engine.softDropActive = true;
+            } else if (e.code === 'Space') {
+                if (engine.gameState === 'game_over') {
+                    engine.score = 0;
+                    engine.level = 1;
+                    engine.lines = 0;
+                    engine.holdPiece = null;
+                    engine.initMatrix();
+                    engine.nextPiece = engine.generatePiece();
+                    engine.spawnNextPiece();
+                    engine.gameState = 'playing';
+                } else {
+                    engine.hardDrop();
+                }
+            } else if (e.code === 'KeyC' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+                engine.hold();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+                engine.softDropActive = false;
+            }
+        });
+
+        function setupTouchButton(id, onDown, onUp) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const start = (e) => { e.preventDefault(); audio.init(); onDown(); };
+            const end = (e) => { e.preventDefault(); if (onUp) onUp(); };
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend', end, { passive: false });
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+        }
+
+        setupTouchButton('btn-left', () => engine.move(-1));
+        setupTouchButton('btn-right', () => engine.move(1));
+        setupTouchButton('btn-soft', () => engine.softDropActive = true, () => engine.softDropActive = false);
+        setupTouchButton('btn-rot-cw', () => engine.rotate(1));
+        setupTouchButton('btn-rot-ccw', () => engine.rotate(-1));
+        setupTouchButton('btn-hold', () => engine.hold());
+        setupTouchButton('btn-drop', () => engine.hardDrop());
+
+        canvas.addEventListener('click', () => {
+            audio.init();
+            if (engine.gameState === 'game_over') {
+                engine.score = 0;
+                engine.level = 1;
+                engine.lines = 0;
+                engine.holdPiece = null;
+                engine.initMatrix();
+                engine.nextPiece = engine.generatePiece();
+                engine.spawnNextPiece();
+                engine.gameState = 'playing';
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>
