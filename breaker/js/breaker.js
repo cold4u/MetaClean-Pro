@@ -2,6 +2,34 @@
  * Neon Breaker: Quantum Void — Studio Game Engine
  */
 
+// CanvasRenderingContext2D roundRect Polyfill for legacy browsers & webviews
+if (typeof CanvasRenderingContext2D !== "undefined" && !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+    if (!radii) radii = 0;
+    if (typeof radii === "number") radii = [radii, radii, radii, radii];
+    if (Array.isArray(radii)) {
+      if (radii.length === 1) radii = [radii[0], radii[0], radii[0], radii[0]];
+      else if (radii.length === 2) radii = [radii[0], radii[1], radii[0], radii[1]];
+      else if (radii.length === 3) radii = [radii[0], radii[1], radii[2], radii[1]];
+    } else {
+      radii = [0, 0, 0, 0];
+    }
+    const [tl, tr, br, bl] = radii;
+    this.beginPath();
+    this.moveTo(x + tl, y);
+    this.lineTo(x + w - tr, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + tr);
+    this.lineTo(x + w, y + h - br);
+    this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+    this.lineTo(x + bl, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - bl);
+    this.lineTo(x, y + tl);
+    this.quadraticCurveTo(x, y, x + tl, y);
+    this.closePath();
+    return this;
+  };
+}
+
 class NeonBreaker {
   constructor() {
     this.audio = new BreakerAudio();
@@ -92,6 +120,7 @@ class NeonBreaker {
       btnPause: document.getElementById("btnPause"),
       btnFire: document.getElementById("btnFire"),
       btnLaunch: document.getElementById("btnLaunch"),
+      btnLevelSelect: document.getElementById("btnLevelSelect"),
       // Modals
       modal: document.getElementById("breakerModal"),
       modalTitle: document.getElementById("modalTitle"),
@@ -155,6 +184,7 @@ class NeonBreaker {
 
     if (this.dom.btnLaunch) this.dom.btnLaunch.addEventListener("click", () => this.handleAction());
     if (this.dom.btnFire) this.dom.btnFire.addEventListener("click", () => this.fireLaser());
+    if (this.dom.btnLevelSelect) this.dom.btnLevelSelect.addEventListener("click", () => this.openLevelSelect());
     if (this.dom.btnPause) this.dom.btnPause.addEventListener("click", () => this.togglePause());
     if (this.dom.btnSound) {
       this.dom.btnSound.addEventListener("click", () => {

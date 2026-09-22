@@ -103,6 +103,7 @@ body {
   width: 100%;
   height: 100%;
   image-rendering: auto;
+  touch-action: none;
 }
 
 /* In-canvas Heads Up Display Overlay */
@@ -421,16 +422,18 @@ body {
 .screen-modal {
   position: absolute;
   inset: 0;
-  background: rgba(6, 9, 15, 0.9);
+  background: rgba(6, 9, 15, 0.92);
   backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   text-align: center;
-  padding: 24px;
+  padding: 20px 16px;
   z-index: 20;
   transition: opacity 0.25s ease;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .screen-modal.hidden {

@@ -418,6 +418,8 @@ body {
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: modalFadeIn 0.2s ease-out;
 }
 
@@ -433,6 +435,9 @@ body {
 .modal-dialog {
   width: 100%;
   max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: #0c121e;
   border: 1px solid rgba(0, 240, 255, 0.35);
   border-radius: 18px;

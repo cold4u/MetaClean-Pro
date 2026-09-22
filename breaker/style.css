@@ -35,7 +35,7 @@ html, body {
   font-family: var(--font-sans);
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
+  touch-action: manipulation;
   -webkit-touch-callout: none;
   overflow-x: hidden;
   overflow-y: auto;
@@ -238,6 +238,8 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -253,6 +255,9 @@ html, body {
 .modal-dialog {
   width: 100%;
   max-width: 380px;
+  max-height: 90vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background: #0c121e;
   border: 1px solid rgba(0, 240, 255, 0.35);
   border-radius: 18px;

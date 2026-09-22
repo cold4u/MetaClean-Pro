@@ -2,6 +2,34 @@
  * Cyber Strike: Void Invaders — Studio Game Engine
  */
 
+// CanvasRenderingContext2D roundRect Polyfill for legacy browsers & webviews
+if (typeof CanvasRenderingContext2D !== "undefined" && !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+    if (!radii) radii = 0;
+    if (typeof radii === "number") radii = [radii, radii, radii, radii];
+    if (Array.isArray(radii)) {
+      if (radii.length === 1) radii = [radii[0], radii[0], radii[0], radii[0]];
+      else if (radii.length === 2) radii = [radii[0], radii[1], radii[0], radii[1]];
+      else if (radii.length === 3) radii = [radii[0], radii[1], radii[2], radii[1]];
+    } else {
+      radii = [0, 0, 0, 0];
+    }
+    const [tl, tr, br, bl] = radii;
+    this.beginPath();
+    this.moveTo(x + tl, y);
+    this.lineTo(x + w - tr, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + tr);
+    this.lineTo(x + w, y + h - br);
+    this.quadraticCurveTo(x + w, y + h, x + w - br, y + h);
+    this.lineTo(x + bl, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - bl);
+    this.lineTo(x, y + tl);
+    this.quadraticCurveTo(x, y, x + tl, y);
+    this.closePath();
+    return this;
+  };
+}
+
 class CyberStrike {
   constructor() {
     this.audio = new StrikeAudio();
@@ -126,6 +154,13 @@ class CyberStrike {
   bindEvents() {
     window.addEventListener("keydown", (e) => {
       this.keys[e.code] = true;
+      if (this.state === "START" || this.state === "GAMEOVER") {
+        if (e.code === "Space" || e.code === "Enter") {
+          e.preventDefault();
+          this.startGame();
+          return;
+        }
+      }
       if (e.code === "Space" || e.code === "KeyB") {
         e.preventDefault();
         this.triggerBomb();
@@ -190,12 +225,26 @@ class CyberStrike {
       });
     }
 
+    if (this.dom.startScreen) {
+      this.dom.startScreen.addEventListener("click", () => this.startGame());
+    }
+
     if (this.dom.btnStart) {
-      this.dom.btnStart.addEventListener("click", () => this.startGame());
+      this.dom.btnStart.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.startGame();
+      });
+    }
+
+    if (this.dom.gameOverModal) {
+      this.dom.gameOverModal.addEventListener("click", () => this.startGame());
     }
 
     if (this.dom.btnRestart) {
-      this.dom.btnRestart.addEventListener("click", () => this.startGame());
+      this.dom.btnRestart.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.startGame();
+      });
     }
 
     window.addEventListener("resize", () => this.resize());
