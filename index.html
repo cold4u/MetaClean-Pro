@@ -6,13 +6,13 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- Cyber Arcade Modal (Multi-Game Arcade Hub) -->
-<div id="arcadeModal" class="arcade-modal hidden" aria-hidden="true" role="dialog" aria-label="Cyber Arcade Hub">
+<!-- Cyber Arcade Modal (19-Game Master Arcade Cabinet) -->
+<div id="arcadeModal" class="arcade-modal hidden" aria-hidden="true" role="dialog" aria-label="Cyber Arcade Master Cabinet">
   <div class="arcade-modal-backdrop" id="arcadeBackdrop"></div>
   <div class="arcade-modal-dialog">
     <div class="arcade-modal-header">
       <div class="arcade-modal-title">
-        <span class="arcade-tag">ARCADE HUB</span>
+        <span class="arcade-tag">19-GAME ARCADE</span>
         <div class="arcade-tab-bar">
           <button class="arcade-tab-btn active" id="tabArcadeTurbo" data-src="game/index.html">🏎️ Turbo Drive</button>
           <button class="arcade-tab-btn" id="tabArcadePuzzle" data-src="puzzle/index.html">🧩 Cyber Circuit</button>
@@ -23,6 +23,16 @@
           <button class="arcade-tab-btn" id="tabArcadePulse" data-src="pulse/index.html">🎵 Cyber Pulse</button>
           <button class="arcade-tab-btn" id="tabArcadeRunner" data-src="runner/index.html">⚡ Gravity Runner</button>
           <button class="arcade-tab-btn" id="tabArcadeDefense" data-src="defense/index.html">🛡️ Neon Defense</button>
+          <button class="arcade-tab-btn" id="tabArcadeSurvivor" data-src="survivor/index.html">🧬 Cyber Survivor</button>
+          <button class="arcade-tab-btn" id="tabArcadePortal" data-src="portal/index.html">🌀 Quantum Portal</button>
+          <button class="arcade-tab-btn" id="tabArcadeRogue" data-src="rogue/index.html">🗡️ Neon Rogue</button>
+          <button class="arcade-tab-btn" id="tabArcadeTower" data-src="tower/index.html">🏰 Matrix Defense</button>
+          <button class="arcade-tab-btn" id="tabArcadeKart" data-src="kart/index.html">🏎️ Cyber Drift</button>
+          <button class="arcade-tab-btn" id="tabArcadeMatch" data-src="match/index.html">✨ Neon Alchemist</button>
+          <button class="arcade-tab-btn" id="tabArcadePinball" data-src="pinball/index.html">⚡ Quantum Pinball</button>
+          <button class="arcade-tab-btn" id="tabArcadeShinobi" data-src="shinobi/index.html">⚔️ Neon Shinobi</button>
+          <button class="arcade-tab-btn" id="tabArcadeDeck" data-src="deck/index.html">🃏 Cyber Deck</button>
+          <button class="arcade-tab-btn" id="tabArcadeFlight" data-src="flight/index.html">✈️ Aero Striker</button>
         </div>
       </div>
       <div class="arcade-modal-actions">
@@ -39,7 +49,7 @@
 <header>
   <a class="brand"><span>✦</span> MetaClean <i>PRO</i></a>
   <div class="header-right">
-    <button id="openArcadeBtn" class="arcade-btn" title="Play Cyber Arcade Games">🎮 Cyber Arcade Hub</button>
+    <button id="openArcadeBtn" class="arcade-btn" title="Play Cyber Arcade Games">🎮 Cyber Arcade Hub (19 Games)</button>
     <div class="privacy">🔒 Runs locally</div>
   </div>
 </header>
@@ -88,9 +98,9 @@
 <section class="arcade-banner-section">
   <div class="arcade-banner-card">
     <div class="arcade-banner-content">
-      <span class="arcade-banner-tag">BUILT-IN RETRO ARCADE HUB — 9 GAMES</span>
-      <h2>Take a breather with our 9-Game Cyber Arcade Cabinet!</h2>
-      <p>Enjoy nine studio-grade browser games: high-octane <strong>Turbo Drive</strong>, circuit logic in <strong>Cyber Circuit</strong>, brick-shattering <strong>Neon Breaker</strong>, bullet storm in <strong>Cyber Strike</strong>, grid looping in <strong>Neon Snake</strong>, vertical ascent in <strong>Quantum Jump</strong>, rhythm tapping in <strong>Cyber Pulse</strong>, physics flipping in <strong>Gravity Runner</strong>, and 360° turret defense in <strong>Neon Defense</strong>.</p>
+      <span class="arcade-banner-tag">BUILT-IN RETRO ARCADE CABINET — 19 HIGH-OCTANE GAMES</span>
+      <h2>Take a breather with our 19-Game Cyber Arcade Cabinet!</h2>
+      <p>Enjoy nineteen studio-grade browser games with rich gameplay depth, roguelike loops, bullet deflection, Mode-7 pseudo-3D curves, tactical deckbuilding, and Web Audio synthesizers: from high-octane <strong>Turbo Drive</strong> & <strong>Cyber Drift</strong>, to mind-bending <strong>Quantum Portal</strong> & <strong>Cyber Circuit</strong>, roguelike dungeon crawling in <strong>Neon Rogue</strong> & <strong>Cyber Survivor</strong>, tactical tower defense in <strong>Matrix Defense</strong>, deep deck duels in <strong>Cyber Deck</strong>, action slashing in <strong>Neon Shinobi</strong>, match-3 RPG spellcasting in <strong>Neon Alchemist</strong>, authentic physics in <strong>Quantum Pinball</strong>, and 2.5D flight dogfights in <strong>Aero Striker</strong>.</p>
       <div class="arcade-banner-btns">
         <button id="arcadeBannerBtn" class="primary-arcade-btn">🏎️ Turbo Drive</button>
         <button id="arcadePuzzleBtn" class="primary-arcade-btn puzzle-btn">🧩 Cyber Circuit</button>
@@ -101,6 +111,16 @@
         <button id="arcadePulseBtn" class="primary-arcade-btn pulse-btn">🎵 Cyber Pulse</button>
         <button id="arcadeRunnerBtn" class="primary-arcade-btn runner-btn">⚡ Gravity Runner</button>
         <button id="arcadeDefenseBtn" class="primary-arcade-btn defense-btn">🛡️ Neon Defense</button>
+        <button id="arcadeSurvivorBtn" class="primary-arcade-btn survivor-btn">🧬 Cyber Survivor</button>
+        <button id="arcadePortalBtn" class="primary-arcade-btn portal-btn">🌀 Quantum Portal</button>
+        <button id="arcadeRogueBtn" class="primary-arcade-btn rogue-btn">🗡️ Neon Rogue</button>
+        <button id="arcadeTowerBtn" class="primary-arcade-btn tower-btn">🏰 Matrix Defense</button>
+        <button id="arcadeKartBtn" class="primary-arcade-btn kart-btn">🏎️ Cyber Drift</button>
+        <button id="arcadeMatchBtn" class="primary-arcade-btn match-btn">✨ Neon Alchemist</button>
+        <button id="arcadePinballBtn" class="primary-arcade-btn pinball-btn">⚡ Quantum Pinball</button>
+        <button id="arcadeShinobiBtn" class="primary-arcade-btn shinobi-btn">⚔️ Neon Shinobi</button>
+        <button id="arcadeDeckBtn" class="primary-arcade-btn deck-btn">🃏 Cyber Deck</button>
+        <button id="arcadeFlightBtn" class="primary-arcade-btn flight-btn">✈️ Aero Striker</button>
       </div>
     </div>
   </div>

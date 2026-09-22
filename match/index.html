@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Alchemist: Spell Matrix | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>✨</span>
+            <span>NEON ALCHEMIST</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="instructions-card">
+            <strong>How to Play:</strong> Click / Tap two adjacent tiles to swap and match 3 or more gems. <b>🔥 Red</b> damages Boss &bull; <b>💧 Blue</b> gives Mana &bull; <b>💚 Green</b> heals HP &bull; <b>🛡️ Yellow</b> builds Shield. Cast spells by clicking buttons or pressing <b>[1-4]</b> before the Boss timer attacks!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/match.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new MatchAudio();
+        const engine = new MatchEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        // Click / Touch Handler
+        function handlePointer(clientX, clientY) {
+            audio.init();
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const cx = (clientX - rect.left) * scaleX;
+            const cy = (clientY - rect.top) * scaleY;
+
+            if (engine.gameOver || engine.victory) {
+                engine.initGrid();
+                engine.playerHp = 100;
+                engine.playerMana = 30;
+                engine.playerShield = 10;
+                engine.score = 0;
+                engine.stageIndex = 0;
+                engine.currentBoss = { ...engine.bossStages[0] };
+                engine.gameOver = false;
+                engine.victory = false;
+                return;
+            }
+
+            // Check if clicking in Grid
+            const gx = cx - engine.gridOffsetX;
+            const gy = cy - engine.gridOffsetY;
+            if (gx >= 0 && gx < engine.cols * engine.tileSize && gy >= 0 && gy < engine.rows * engine.tileSize) {
+                const c = Math.floor(gx / engine.tileSize);
+                const r = Math.floor(gy / engine.tileSize);
+                engine.selectTile(r, c);
+                return;
+            }
+
+            // Check if clicking Spell buttons
+            engine.spells.forEach((sp, i) => {
+                const bx = 20 + (i % 2) * 150;
+                const by = 410 + Math.floor(i / 2) * 80;
+                if (cx >= bx && cx <= bx + 140 && cy >= by && cy <= by + 70) {
+                    engine.castSpell(i);
+                }
+            });
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            handlePointer(e.clientX, e.clientY);
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.touches[0];
+            handlePointer(t.clientX, t.clientY);
+        }, { passive: false });
+
+        // Keyboard triggers for spells
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (e.key >= '1' && e.key <= '4') {
+                engine.castSpell(parseInt(e.key) - 1);
+            }
+            if (e.code === 'Space' && (engine.gameOver || engine.victory)) {
+                engine.initGrid();
+                engine.playerHp = 100;
+                engine.playerMana = 30;
+                engine.playerShield = 10;
+                engine.score = 0;
+                engine.stageIndex = 0;
+                engine.currentBoss = { ...engine.bossStages[0] };
+                engine.gameOver = false;
+                engine.victory = false;
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

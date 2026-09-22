@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aero Striker: Sky Ace | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>✈️</span>
+            <span>AERO STRIKER</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="touch-controls">
+            <div class="touch-cluster">
+                <button id="touch-left" class="touch-btn">◀</button>
+                <button id="touch-right" class="touch-btn">▶</button>
+                <button id="touch-up" class="touch-btn">▲</button>
+                <button id="touch-down" class="touch-btn">▼</button>
+            </div>
+            <div class="touch-cluster">
+                <button id="touch-roll" class="touch-btn">🔄 Roll</button>
+                <button id="touch-lock" class="touch-btn">🎯 Lock</button>
+                <button id="touch-fire" class="touch-btn accent">⚡ Fire</button>
+            </div>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> <b>WASD / Arrow Keys</b>: Flight Steer &bull; <b>Space / Left Click</b>: Twin Lasers &bull; <b>X / Right Click (Hold & Release)</b>: Multi-Lock Homing Torpedoes &bull; <b>C / Shift</b>: Barrel Roll (Deflects enemy fire!).
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/flight.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new FlightAudio();
+        const engine = new FlightEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) engine.keys.left = true;
+            if (['ArrowRight', 'KeyD'].includes(e.code)) engine.keys.right = true;
+            if (['ArrowUp', 'KeyW'].includes(e.code)) engine.keys.up = true;
+            if (['ArrowDown', 'KeyS'].includes(e.code)) engine.keys.down = true;
+
+            if (e.code === 'Space') {
+                if (engine.gameOver || engine.victory) {
+                    engine.player.hp = 100;
+                    engine.player.shield = 50;
+                    engine.player.missiles = 4;
+                    engine.score = 0;
+                    engine.distance = 0;
+                    engine.bossActive = false;
+                    engine.boss = null;
+                    engine.enemies = [];
+                    engine.lasers = [];
+                    engine.missiles = [];
+                    engine.enemyLasers = [];
+                    engine.gameOver = false;
+                    engine.victory = false;
+                } else {
+                    engine.triggerFire();
+                }
+            }
+
+            if (['KeyX', 'KeyK'].includes(e.code)) engine.startLockOn();
+            if (['KeyC', 'ShiftLeft', 'ShiftRight'].includes(e.code)) engine.triggerBarrelRoll();
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) engine.keys.left = false;
+            if (['ArrowRight', 'KeyD'].includes(e.code)) engine.keys.right = false;
+            if (['ArrowUp', 'KeyW'].includes(e.code)) engine.keys.up = false;
+            if (['ArrowDown', 'KeyS'].includes(e.code)) engine.keys.down = false;
+            if (['KeyX', 'KeyK'].includes(e.code)) engine.releaseLockOn();
+        });
+
+        // Touch Control Binds
+        const bindHold = (id, prop) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const start = (e) => {
+                e.preventDefault();
+                audio.init();
+                engine.keys[prop] = true;
+            };
+            const end = (e) => {
+                e.preventDefault();
+                engine.keys[prop] = false;
+            };
+            el.addEventListener('touchstart', start, { passive: false });
+            el.addEventListener('touchend', end, { passive: false });
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', end);
+        };
+
+        bindHold('touch-left', 'left');
+        bindHold('touch-right', 'right');
+        bindHold('touch-up', 'up');
+        bindHold('touch-down', 'down');
+
+        const bindTrigger = (id, onDown, onUp) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const down = (e) => {
+                e.preventDefault();
+                audio.init();
+                onDown();
+            };
+            const up = (e) => {
+                e.preventDefault();
+                if (onUp) onUp();
+            };
+            el.addEventListener('touchstart', down, { passive: false });
+            el.addEventListener('touchend', up, { passive: false });
+            el.addEventListener('mousedown', down);
+            el.addEventListener('mouseup', up);
+        };
+
+        bindTrigger('touch-fire', () => engine.triggerFire());
+        bindTrigger('touch-roll', () => engine.triggerBarrelRoll());
+        bindTrigger('touch-lock', () => engine.startLockOn(), () => engine.releaseLockOn());
+
+        // Mouse click on canvas
+        canvas.addEventListener('mousedown', (e) => {
+            audio.init();
+            if (engine.gameOver || engine.victory) {
+                engine.player.hp = 100;
+                engine.player.shield = 50;
+                engine.player.missiles = 4;
+                engine.score = 0;
+                engine.distance = 0;
+                engine.bossActive = false;
+                engine.boss = null;
+                engine.enemies = [];
+                engine.lasers = [];
+                engine.missiles = [];
+                engine.enemyLasers = [];
+                engine.gameOver = false;
+                engine.victory = false;
+            } else {
+                if (e.button === 0) engine.triggerFire();
+                else if (e.button === 2) engine.startLockOn();
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (e.button === 2) engine.releaseLockOn();
+        });
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

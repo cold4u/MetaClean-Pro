@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber Drift: Neon Velocity | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>🏎️</span>
+            <span>CYBER DRIFT</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="touch-controls">
+            <div class="touch-cluster">
+                <button id="touch-left" class="touch-btn">◀</button>
+                <button id="touch-right" class="touch-btn">▶</button>
+            </div>
+            <div class="touch-cluster">
+                <button id="touch-item" class="touch-btn">⚡ Item</button>
+                <button id="touch-drift" class="touch-btn accent">DRIFT</button>
+                <button id="touch-gas" class="touch-btn">GAS</button>
+            </div>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> <b>↑ / W</b>: Accelerate &bull; <b>←/→ or A/D</b>: Steer &bull; <b>Shift / Space</b>: Power Drift (Hold in turn to charge Mini/Super/Ultra Boost!) &bull; <b>E / Ctrl</b>: Use Weapon &bull; <b>↓ / S</b>: Brake.
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/kart.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new KartAudio();
+        const engine = new KartEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (['ArrowUp', 'KeyW'].includes(e.code)) engine.keys.up = true;
+            if (['ArrowDown', 'KeyS'].includes(e.code)) engine.keys.down = true;
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) engine.keys.left = true;
+            if (['ArrowRight', 'KeyD'].includes(e.code)) engine.keys.right = true;
+            if (['ShiftLeft', 'ShiftRight', 'KeyZ'].includes(e.code)) engine.keys.drift = true;
+            if (['Space', 'KeyE'].includes(e.code)) {
+                if (engine.raceFinished) {
+                    engine.buildTrack();
+                    engine.initOpponents();
+                    engine.startRace();
+                } else {
+                    engine.useItem();
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (['ArrowUp', 'KeyW'].includes(e.code)) engine.keys.up = false;
+            if (['ArrowDown', 'KeyS'].includes(e.code)) engine.keys.down = false;
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) engine.keys.left = false;
+            if (['ArrowRight', 'KeyD'].includes(e.code)) engine.keys.right = false;
+            if (['ShiftLeft', 'ShiftRight', 'KeyZ'].includes(e.code)) engine.keys.drift = false;
+        });
+
+        // Touch binds
+        const bindTouch = (id, prop, isAction) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const start = (e) => {
+                e.preventDefault();
+                audio.init();
+                if (isAction) {
+                    if (engine.raceFinished) {
+                        engine.buildTrack();
+                        engine.initOpponents();
+                        engine.startRace();
+                    } else {
+                        engine.useItem();
+                    }
+                } else {
+                    engine.keys[prop] = true;
+                }
+            };
+            const end = (e) => {
+                e.preventDefault();
+                if (!isAction) engine.keys[prop] = false;
+            };
+            el.addEventListener('touchstart', start, { passive: false });
+            el.addEventListener('touchend', end, { passive: false });
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', end);
+        };
+
+        bindTouch('touch-left', 'left');
+        bindTouch('touch-right', 'right');
+        bindTouch('touch-gas', 'up');
+        bindTouch('touch-drift', 'drift');
+        bindTouch('touch-item', null, true);
+
+        canvas.addEventListener('click', () => {
+            audio.init();
+            if (engine.raceFinished) {
+                engine.buildTrack();
+                engine.initOpponents();
+                engine.startRace();
+            } else if (!engine.raceStarted && engine.countdown === 3) {
+                engine.startRace();
+            }
+        });
+
+        // Main game loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+
+        // Start
+        engine.startRace();
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

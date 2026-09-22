@@ -23,39 +23,51 @@ $("#download").onclick=()=>{if(!cleanBlob)return;let base=original.name.replace(
 $("#reset").onclick=$("#again").onclick=()=>{app.classList.add("hidden");input.value="";original=null;cleanBlob=null;window.scrollTo({top:0,behavior:"smooth"})};
 
 // ============================================================================
-// Cyber Arcade Hub Launcher (9-Game Arcade Cabinet)
+// Cyber Arcade Hub Launcher (19-Game Master Arcade Cabinet)
 // ============================================================================
 const arcadeModal = $("#arcadeModal");
 const arcadeIframe = $("#arcadeIframe");
 const arcadeTabLink = $("#arcadeTabLink");
 
-const tabs = {
-  turbo: $("#tabArcadeTurbo"),
-  puzzle: $("#tabArcadePuzzle"),
-  breaker: $("#tabArcadeBreaker"),
-  strike: $("#tabArcadeStrike"),
-  snake: $("#tabArcadeSnake"),
-  jump: $("#tabArcadeJump"),
-  pulse: $("#tabArcadePulse"),
-  runner: $("#tabArcadeRunner"),
-  defense: $("#tabArcadeDefense")
-};
+const arcadeGames = [
+  { id: "turbo", btnId: "#tabArcadeTurbo", bannerId: "#arcadeBannerBtn", path: "game/index.html" },
+  { id: "puzzle", btnId: "#tabArcadePuzzle", bannerId: "#arcadePuzzleBtn", path: "puzzle/index.html" },
+  { id: "breaker", btnId: "#tabArcadeBreaker", bannerId: "#arcadeBreakerBtn", path: "breaker/index.html" },
+  { id: "strike", btnId: "#tabArcadeStrike", bannerId: "#arcadeStrikeBtn", path: "strike/index.html" },
+  { id: "snake", btnId: "#tabArcadeSnake", bannerId: "#arcadeSnakeBtn", path: "snake/index.html" },
+  { id: "jump", btnId: "#tabArcadeJump", bannerId: "#arcadeJumpBtn", path: "jump/index.html" },
+  { id: "pulse", btnId: "#tabArcadePulse", bannerId: "#arcadePulseBtn", path: "pulse/index.html" },
+  { id: "runner", btnId: "#tabArcadeRunner", bannerId: "#arcadeRunnerBtn", path: "runner/index.html" },
+  { id: "defense", btnId: "#tabArcadeDefense", bannerId: "#arcadeDefenseBtn", path: "defense/index.html" },
+  { id: "survivor", btnId: "#tabArcadeSurvivor", bannerId: "#arcadeSurvivorBtn", path: "survivor/index.html" },
+  { id: "portal", btnId: "#tabArcadePortal", bannerId: "#arcadePortalBtn", path: "portal/index.html" },
+  { id: "rogue", btnId: "#tabArcadeRogue", bannerId: "#arcadeRogueBtn", path: "rogue/index.html" },
+  { id: "tower", btnId: "#tabArcadeTower", bannerId: "#arcadeTowerBtn", path: "tower/index.html" },
+  { id: "kart", btnId: "#tabArcadeKart", bannerId: "#arcadeKartBtn", path: "kart/index.html" },
+  { id: "match", btnId: "#tabArcadeMatch", bannerId: "#arcadeMatchBtn", path: "match/index.html" },
+  { id: "pinball", btnId: "#tabArcadePinball", bannerId: "#arcadePinballBtn", path: "pinball/index.html" },
+  { id: "shinobi", btnId: "#tabArcadeShinobi", bannerId: "#arcadeShinobiBtn", path: "shinobi/index.html" },
+  { id: "deck", btnId: "#tabArcadeDeck", bannerId: "#arcadeDeckBtn", path: "deck/index.html" },
+  { id: "flight", btnId: "#tabArcadeFlight", bannerId: "#arcadeFlightBtn", path: "flight/index.html" }
+];
 
 function switchGame(url) {
   const cleanUrl = url.split("?")[0];
   const cacheBusted = cleanUrl + "?t=" + Date.now();
   if (arcadeIframe) arcadeIframe.src = cacheBusted;
   if (arcadeTabLink) arcadeTabLink.href = cleanUrl;
-  
-  if (tabs.turbo) tabs.turbo.classList.toggle("active", cleanUrl.includes("game"));
-  if (tabs.puzzle) tabs.puzzle.classList.toggle("active", cleanUrl.includes("puzzle"));
-  if (tabs.breaker) tabs.breaker.classList.toggle("active", cleanUrl.includes("breaker"));
-  if (tabs.strike) tabs.strike.classList.toggle("active", cleanUrl.includes("strike"));
-  if (tabs.snake) tabs.snake.classList.toggle("active", cleanUrl.includes("snake"));
-  if (tabs.jump) tabs.jump.classList.toggle("active", cleanUrl.includes("jump"));
-  if (tabs.pulse) tabs.pulse.classList.toggle("active", cleanUrl.includes("pulse"));
-  if (tabs.runner) tabs.runner.classList.toggle("active", cleanUrl.includes("runner"));
-  if (tabs.defense) tabs.defense.classList.toggle("active", cleanUrl.includes("defense"));
+
+  const targetFolder = cleanUrl.split("/")[0];
+  arcadeGames.forEach(g => {
+    const tabEl = $(g.btnId);
+    if (tabEl) {
+      const match = g.path.startsWith(targetFolder);
+      tabEl.classList.toggle("active", match);
+      if (match && typeof tabEl.scrollIntoView === 'function') {
+        tabEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      }
+    }
+  });
 }
 
 function openArcade(gameUrl = "game/index.html") {
@@ -74,38 +86,18 @@ function closeArcade() {
   document.body.style.overflow = "";
 }
 
-// Tab Clicks
-if (tabs.turbo) tabs.turbo.onclick = () => switchGame("game/index.html");
-if (tabs.puzzle) tabs.puzzle.onclick = () => switchGame("puzzle/index.html");
-if (tabs.breaker) tabs.breaker.onclick = () => switchGame("breaker/index.html");
-if (tabs.strike) tabs.strike.onclick = () => switchGame("strike/index.html");
-if (tabs.snake) tabs.snake.onclick = () => switchGame("snake/index.html");
-if (tabs.jump) tabs.jump.onclick = () => switchGame("jump/index.html");
-if (tabs.pulse) tabs.pulse.onclick = () => switchGame("pulse/index.html");
-if (tabs.runner) tabs.runner.onclick = () => switchGame("runner/index.html");
-if (tabs.defense) tabs.defense.onclick = () => switchGame("defense/index.html");
+// Bind tabs and banner buttons
+arcadeGames.forEach(g => {
+  const tabBtn = $(g.btnId);
+  if (tabBtn) tabBtn.onclick = () => switchGame(g.path);
+
+  const bannerBtn = $(g.bannerId);
+  if (bannerBtn) bannerBtn.onclick = () => openArcade(g.path);
+});
 
 // Header Button
 const openBtn = $("#openArcadeBtn");
 if (openBtn) openBtn.onclick = () => openArcade("game/index.html");
-
-// Banner Buttons
-const bannerBindings = [
-  { id: "#arcadeBannerBtn", url: "game/index.html" },
-  { id: "#arcadePuzzleBtn", url: "puzzle/index.html" },
-  { id: "#arcadeBreakerBtn", url: "breaker/index.html" },
-  { id: "#arcadeStrikeBtn", url: "strike/index.html" },
-  { id: "#arcadeSnakeBtn", url: "snake/index.html" },
-  { id: "#arcadeJumpBtn", url: "jump/index.html" },
-  { id: "#arcadePulseBtn", url: "pulse/index.html" },
-  { id: "#arcadeRunnerBtn", url: "runner/index.html" },
-  { id: "#arcadeDefenseBtn", url: "defense/index.html" }
-];
-
-bannerBindings.forEach(({ id, url }) => {
-  const btn = $(id);
-  if (btn) btn.onclick = () => openArcade(url);
-});
 
 const closeBtn = $("#closeArcadeBtn");
 if (closeBtn) closeBtn.onclick = closeArcade;
@@ -118,5 +110,3 @@ window.addEventListener("keydown", (e) => {
     closeArcade();
   }
 });
-
-

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Matrix Defense: Core Command | Path Tower Defense</title>
+  <meta name="description" content="Construct strategic defensive turrets, chain Tesla coils, fire orbital rocket barrages, and protect the mainframe core.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏰</text></svg>">
+  <link rel="stylesheet" href="style.css?v=5.0">
+</head>
+<body>
+
+  <div class="game-container">
+    
+    <!-- TOP HUD -->
+    <header class="hud-bar">
+      <div class="hud-col">
+        <span class="hud-lbl">CORE SHIELD</span>
+        <span class="hud-val highlight" id="coreDisplay">20 HP</span>
+      </div>
+      <div class="hud-col center">
+        <span class="hud-lbl">SECTOR WAVE</span>
+        <span class="hud-val" id="waveDisplay">WAVE 1/15</span>
+      </div>
+      <div class="hud-col">
+        <span class="hud-lbl">CREDITS</span>
+        <span class="hud-val gold" id="creditDisplay">$350</span>
+      </div>
+    </header>
+
+    <!-- SUB HUD -->
+    <div class="sub-hud-bar">
+      <button id="btnUpgradeSelected" class="hud-btn">⭐ Upgrade Tower ($80)</button>
+      <button id="btnSound" class="hud-btn">🔊 SFX: ON</button>
+      <button id="btnPause" class="hud-btn">⏸ Pause</button>
+    </div>
+
+    <!-- CANVAS WRAPPER -->
+    <main class="canvas-wrap" id="canvasWrap">
+      <canvas id="towerCanvas" width="600" height="450"></canvas>
+    </main>
+
+    <!-- BUILD DOCK -->
+    <footer class="build-dock">
+      <div class="tower-card selected" data-type="pulse" id="cardPulse">
+        <div class="card-icon">🔫</div>
+        <div class="card-name">Pulse</div>
+        <div class="card-cost">$100</div>
+      </div>
+      <div class="tower-card" data-type="laser" id="cardLaser">
+        <div class="card-icon">⚡</div>
+        <div class="card-name">Laser</div>
+        <div class="card-cost">$150</div>
+      </div>
+      <div class="tower-card" data-type="tesla" id="cardTesla">
+        <div class="card-icon">🌐</div>
+        <div class="card-name">Tesla</div>
+        <div class="card-cost">$200</div>
+      </div>
+      <div class="tower-card" data-type="rocket" id="cardRocket">
+        <div class="card-icon">🚀</div>
+        <div class="card-name">Rocket</div>
+        <div class="card-cost">$250</div>
+      </div>
+      <div class="tower-card" data-type="miner" id="cardMiner">
+        <div class="card-icon">💎</div>
+        <div class="card-name">Miner</div>
+        <div class="card-cost">$180</div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- START MODAL -->
+  <div id="startModal" class="modal-overlay">
+    <div class="modal-box">
+      <h1 class="modal-title">CORE COMMAND</h1>
+      <p class="modal-subtitle">MATRIX TOWER DEFENSE PROTOCOL</p>
+      <div style="text-align: left; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 0.8rem; line-height: 1.6;">
+        <ul>
+          <li><strong>Build:</strong> Select a tower from the bottom dock, then tap any circular socket node along the circuit track.</li>
+          <li><strong>Upgrade:</strong> Tap built towers to inspect range and click ⭐ Upgrade Tower.</li>
+          <li><strong>5 Classes:</strong> Rapid Pulse, Armor-Melting Laser, Stun Tesla, Splash Rocket, and Passive Credit Miner.</li>
+          <li><strong>Core Security:</strong> Prevent viral bots from reaching the final circuit terminal!</li>
+        </ul>
+      </div>
+      <button id="btnStart" class="primary-btn">COMMENCE DEFENSE</button>
+    </div>
+  </div>
+
+  <!-- VICTORY MODAL -->
+  <div id="victoryModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2 class="modal-title" style="color: #00ff66;">SYSTEM SECURED</h2>
+      <p class="modal-subtitle">All 15 viral waves neutralized!</p>
+      <button id="btnRestartVictory" class="primary-btn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- GAMEOVER MODAL -->
+  <div id="gameOverModal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <h2 class="modal-title" style="color: #ff0055;">CORE OVERRUN</h2>
+      <p class="modal-subtitle">Viruses breached the core circuit</p>
+      <button id="btnRestart" class="primary-btn">RETRY DEFENSE</button>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script src="js/audio.js?v=5.0"></script>
+  <script src="js/tower.js?v=5.0"></script>
+  <script>
+    (function() {
+      const canvas = document.getElementById("towerCanvas");
+      const audio = new TowerAudio();
+      const game = new TowerGame(canvas, audio);
+
+      // UI
+      const coreDisplay = document.getElementById("coreDisplay");
+      const waveDisplay = document.getElementById("waveDisplay");
+      const creditDisplay = document.getElementById("creditDisplay");
+      const btnUpgradeSelected = document.getElementById("btnUpgradeSelected");
+      const btnSound = document.getElementById("btnSound");
+      const btnPause = document.getElementById("btnPause");
+
+      const startModal = document.getElementById("startModal");
+      const victoryModal = document.getElementById("victoryModal");
+      const gameOverModal = document.getElementById("gameOverModal");
+      const btnStart = document.getElementById("btnStart");
+      const btnRestart = document.getElementById("btnRestart");
+      const btnRestartVictory = document.getElementById("btnRestartVictory");
+
+      let selectedType = "pulse";
+
+      function updateHUD() {
+        coreDisplay.textContent = `${game.coreHP} HP`;
+        waveDisplay.textContent = `WAVE ${game.wave}/${game.maxWave}`;
+        creditDisplay.textContent = `$${game.credits}`;
+
+        if (game.selectedSocket !== null) {
+          const s = game.sockets.find(sock => sock.id === game.selectedSocket);
+          if (s && s.tower) {
+            const cost = s.tower.level === 1 ? "$80" : "$140";
+            btnUpgradeSelected.textContent = s.tower.level >= 3 ? "⭐ MAX LEVEL" : `⭐ Upgrade L${s.tower.level + 1} (${cost})`;
+            btnUpgradeSelected.disabled = s.tower.level >= 3;
+          } else {
+            btnUpgradeSelected.textContent = "Select Built Tower";
+          }
+        }
+      }
+
+      game.onVictory = () => victoryModal.classList.remove("hidden");
+      game.onGameOver = () => gameOverModal.classList.remove("hidden");
+
+      function startGame() {
+        startModal.classList.add("hidden");
+        victoryModal.classList.add("hidden");
+        gameOverModal.classList.add("hidden");
+        game.start();
+      }
+
+      btnStart.onclick = startGame;
+      btnRestart.onclick = startGame;
+      btnRestartVictory.onclick = startGame;
+
+      btnSound.onclick = () => {
+        const enabled = audio.toggle();
+        btnSound.textContent = enabled ? "🔊 SFX: ON" : "🔇 SFX: OFF";
+      };
+
+      btnPause.onclick = () => {
+        const p = game.state === "PLAYING" ? (game.state = "PAUSED", true) : (game.state = "PLAYING", false);
+        btnPause.textContent = p ? "▶ Resume" : "⏸ Pause";
+      };
+
+      // Card selection
+      const cards = document.querySelectorAll(".tower-card");
+      cards.forEach(card => {
+        card.onclick = () => {
+          cards.forEach(c => c.classList.remove("selected"));
+          card.classList.add("selected");
+          selectedType = card.dataset.type;
+        };
+      });
+
+      btnUpgradeSelected.onclick = () => {
+        if (game.selectedSocket !== null) {
+          game.upgradeTower(game.selectedSocket);
+          updateHUD();
+        }
+      };
+
+      // Canvas tap to select / build socket
+      canvas.addEventListener("pointerdown", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const tx = (e.clientX - rect.left) * scaleX;
+        const ty = (e.clientY - rect.top) * scaleY;
+
+        let clickedSocket = null;
+        for (let i = 0; i < game.sockets.length; i++) {
+          const s = game.sockets[i];
+          if (Math.hypot(tx - s.x, ty - s.y) < 24) {
+            clickedSocket = s;
+            break;
+          }
+        }
+
+        if (clickedSocket) {
+          game.selectedSocket = clickedSocket.id;
+          if (!clickedSocket.tower) {
+            game.buildTower(clickedSocket.id, selectedType);
+          }
+          updateHUD();
+        } else {
+          game.selectedSocket = null;
+        }
+      });
+
+      let lastFrame = performance.now();
+      function loop(now) {
+        const delta = Math.min(now - lastFrame, 100);
+        lastFrame = now;
+
+        game.update(delta);
+        game.render();
+        updateHUD();
+
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shadow Blades: Neon Shinobi | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>🗡️</span>
+            <span>NEON SHINOBI</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="touch-controls">
+            <div class="touch-cluster">
+                <button id="touch-left" class="touch-btn">◀</button>
+                <button id="touch-right" class="touch-btn">▶</button>
+            </div>
+            <div class="touch-cluster">
+                <button id="touch-kunai" class="touch-btn">⚡ Kunai</button>
+                <button id="touch-dash" class="touch-btn">💨 Dash</button>
+                <button id="touch-jump" class="touch-btn">⬆ Jump</button>
+                <button id="touch-slash" class="touch-btn accent">⚔️ Slash</button>
+            </div>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> <b>A/D or ←/→</b>: Run &bull; <b>Space / W / ↑</b>: Jump & Double Jump &bull; <b>X</b>: Katana Slash (Parries enemy bullets!) &bull; <b>C / Shift</b>: Air Dash &bull; <b>Z</b>: Throw Cyber Kunai. SSS Rank Combo System!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/shinobi.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new ShinobiAudio();
+        const engine = new ShinobiEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) engine.keys.left = true;
+            if (['ArrowRight', 'KeyD'].includes(e.code)) engine.keys.right = true;
+            if (['ArrowUp', 'KeyW', 'Space'].includes(e.code)) {
+                if (engine.gameOver || engine.victory) {
+                    engine.player.x = 80;
+                    engine.player.y = 450;
+                    engine.player.hp = 100;
+                    engine.player.shurikens = 5;
+                    engine.styleScore = 0;
+                    engine.currentRank = 'D';
+                    engine.initEnemies();
+                    engine.gameOver = false;
+                    engine.victory = false;
+                } else {
+                    engine.triggerJump();
+                }
+            }
+            if (['KeyX', 'KeyJ'].includes(e.code)) engine.triggerSlash();
+            if (['KeyC', 'ShiftLeft', 'ShiftRight'].includes(e.code)) engine.triggerDash();
+            if (['KeyZ', 'KeyK'].includes(e.code)) engine.triggerShuriken();
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) engine.keys.left = false;
+            if (['ArrowRight', 'KeyD'].includes(e.code)) engine.keys.right = false;
+        });
+
+        // Touch Control Binds
+        const bindHold = (id, prop) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const start = (e) => {
+                e.preventDefault();
+                audio.init();
+                engine.keys[prop] = true;
+            };
+            const end = (e) => {
+                e.preventDefault();
+                engine.keys[prop] = false;
+            };
+            el.addEventListener('touchstart', start, { passive: false });
+            el.addEventListener('touchend', end, { passive: false });
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', end);
+        };
+
+        const bindPress = (id, action) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const trigger = (e) => {
+                e.preventDefault();
+                audio.init();
+                action();
+            };
+            el.addEventListener('touchstart', trigger, { passive: false });
+            el.addEventListener('mousedown', trigger);
+        };
+
+        bindHold('touch-left', 'left');
+        bindHold('touch-right', 'right');
+        bindPress('touch-jump', () => engine.triggerJump());
+        bindPress('touch-slash', () => engine.triggerSlash());
+        bindPress('touch-dash', () => engine.triggerDash());
+        bindPress('touch-kunai', () => engine.triggerShuriken());
+
+        // Mouse click for slash on desktop
+        canvas.addEventListener('mousedown', (e) => {
+            audio.init();
+            if (engine.gameOver || engine.victory) {
+                engine.player.x = 80;
+                engine.player.y = 450;
+                engine.player.hp = 100;
+                engine.player.shurikens = 5;
+                engine.styleScore = 0;
+                engine.currentRank = 'D';
+                engine.initEnemies();
+                engine.gameOver = false;
+                engine.victory = false;
+            } else {
+                if (e.button === 0) engine.triggerSlash();
+                else if (e.button === 2) engine.triggerShuriken();
+            }
+        });
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Main Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

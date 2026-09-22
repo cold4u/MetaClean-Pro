@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cyber Deck: Netrunner Duel | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>🃏</span>
+            <span>CYBER DECK</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div class="instructions-card">
+            <strong>How to Play:</strong> Click / Tap cards in hand or press <b>[1-5]</b> to play them using your 3⚡ Energy. Click <b>END TURN [E]</b> when finished to let Corporate ICE act. Defeat encounters to draft powerful new software!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/deck.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new DeckAudio();
+        const engine = new DeckEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        function handlePointer(clientX, clientY) {
+            audio.init();
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const cx = (clientX - rect.left) * scaleX;
+            const cy = (clientY - rect.top) * scaleY;
+
+            if (engine.gameOver || engine.victory) {
+                engine.playerHp = 70;
+                engine.encounterIndex = 0;
+                engine.currentEnemy = { ...engine.encounters[0] };
+                engine.rewardDraftActive = false;
+                engine.gameOver = false;
+                engine.victory = false;
+                engine.initStarterDeck();
+                engine.startTurn();
+                return;
+            }
+
+            // Reward Draft Selection
+            if (engine.rewardDraftActive) {
+                const cardW = 160;
+                const cardH = 220;
+                const startX = (engine.width - 3 * 200) / 2 + 20;
+                const cardY = 200;
+                for (let i = 0; i < engine.rewardOptions.length; i++) {
+                    const x = startX + i * 200;
+                    if (cx >= x && cx <= x + cardW && cy >= cardY && cy <= cardY + cardH) {
+                        engine.chooseDraftCard(i);
+                        return;
+                    }
+                }
+                return;
+            }
+
+            // End Turn Button Click
+            if (cx >= engine.width - 150 && cx <= engine.width - 20 && cy >= engine.height - 110 && cy <= engine.height - 62) {
+                engine.endTurn();
+                return;
+            }
+
+            // Hand Cards Click
+            const totalCards = engine.hand.length;
+            const cardW = 105;
+            const cardH = 145;
+            const spacing = 115;
+            const startX = (engine.width - totalCards * spacing) / 2 + 10;
+            const cardY = engine.height - 180;
+
+            for (let i = 0; i < totalCards; i++) {
+                const x = startX + i * spacing;
+                if (cx >= x && cx <= x + cardW && cy >= cardY && cy <= cardY + cardH) {
+                    engine.playCard(i);
+                    return;
+                }
+            }
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            handlePointer(e.clientX, e.clientY);
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const t = e.touches[0];
+            handlePointer(t.clientX, t.clientY);
+        }, { passive: false });
+
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (e.code === 'KeyE' || e.code === 'Space') {
+                if (engine.gameOver || engine.victory) {
+                    engine.playerHp = 70;
+                    engine.encounterIndex = 0;
+                    engine.currentEnemy = { ...engine.encounters[0] };
+                    engine.rewardDraftActive = false;
+                    engine.gameOver = false;
+                    engine.victory = false;
+                    engine.initStarterDeck();
+                    engine.startTurn();
+                } else if (!engine.rewardDraftActive) {
+                    engine.endTurn();
+                }
+            }
+
+            if (e.key >= '1' && e.key <= '5') {
+                const idx = parseInt(e.key) - 1;
+                if (engine.rewardDraftActive && idx < engine.rewardOptions.length) {
+                    engine.chooseDraftCard(idx);
+                } else if (!engine.rewardDraftActive) {
+                    engine.playCard(idx);
+                }
+            }
+        });
+
+        // Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quantum Pinball: Cyber Table | MetaClean Arcade</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span>⚡</span>
+            <span>QUANTUM PINBALL</span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-audio" class="btn-icon">🔊 Sound</button>
+            <a href="../index.html" class="btn-icon">Arcade Hub ↩</a>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="touch-controls">
+            <button id="touch-left-flip" class="flipper-btn">◀ LEFT FLIP</button>
+            <button id="touch-plunger" class="plunger-btn">LAUNCH</button>
+            <button id="touch-right-flip" class="flipper-btn">RIGHT FLIP ▶</button>
+        </div>
+
+        <div class="instructions-card">
+            <strong>Controls:</strong> <b>← / A</b>: Left Flipper &bull; <b>→ / D</b>: Right Flipper &bull; <b>↓ / Space (Hold & Release)</b>: Launch Plunger Spring. Knock down all 3 yellow Drop Targets to trigger Vault Multiball!
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/pinball.js"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const audio = new PinballAudio();
+        const engine = new PinballEngine(canvas, audio);
+
+        document.getElementById('btn-audio').addEventListener('click', (e) => {
+            audio.init();
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '🔇 Muted' : '🔊 Sound';
+        });
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            audio.init();
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) {
+                engine.pressLeftFlipper();
+            }
+            if (['ArrowRight', 'KeyD'].includes(e.code)) {
+                engine.pressRightFlipper();
+            }
+            if (['ArrowDown', 'KeyS', 'Space'].includes(e.code)) {
+                if (engine.gameOver) {
+                    engine.ballsRemaining = 3;
+                    engine.score = 0;
+                    engine.multiplier = 1;
+                    engine.gameOver = false;
+                    engine.spawnBall();
+                } else {
+                    engine.chargePlunger();
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (['ArrowLeft', 'KeyA'].includes(e.code)) {
+                engine.releaseLeftFlipper();
+            }
+            if (['ArrowRight', 'KeyD'].includes(e.code)) {
+                engine.releaseRightFlipper();
+            }
+            if (['ArrowDown', 'KeyS', 'Space'].includes(e.code)) {
+                engine.releasePlunger();
+            }
+        });
+
+        // Touch binds
+        const bindButton = (id, onDown, onUp) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const down = (e) => {
+                e.preventDefault();
+                audio.init();
+                onDown();
+            };
+            const up = (e) => {
+                e.preventDefault();
+                onUp();
+            };
+            el.addEventListener('touchstart', down, { passive: false });
+            el.addEventListener('touchend', up, { passive: false });
+            el.addEventListener('mousedown', down);
+            el.addEventListener('mouseup', up);
+        };
+
+        bindButton('touch-left-flip', () => engine.pressLeftFlipper(), () => engine.releaseLeftFlipper());
+        bindButton('touch-right-flip', () => engine.pressRightFlipper(), () => engine.releaseRightFlipper());
+        bindButton('touch-plunger', () => {
+            if (engine.gameOver) {
+                engine.ballsRemaining = 3;
+                engine.score = 0;
+                engine.multiplier = 1;
+                engine.gameOver = false;
+                engine.spawnBall();
+            } else {
+                engine.chargePlunger();
+            }
+        }, () => engine.releasePlunger());
+
+        // Screen tap for flippers on desktop/touch
+        canvas.addEventListener('click', () => {
+            audio.init();
+            if (engine.gameOver) {
+                engine.ballsRemaining = 3;
+                engine.score = 0;
+                engine.multiplier = 1;
+                engine.gameOver = false;
+                engine.spawnBall();
+            }
+        });
+
+        // Main game loop
+        let lastTime = performance.now();
+        function loop(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+            engine.update(dt);
+            engine.render();
+            requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>
