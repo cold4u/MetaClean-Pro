@@ -313,6 +313,11 @@ class RunnerGame {
     this.state = "GAMEOVER";
     this.audio.playCrash();
     this.createExplosion(this.player.x + 13, this.player.y + 17, "#ff0055", 25);
+    if (typeof CGZBridge !== "undefined") {
+      CGZBridge.shakeScreen(this.canvas, 10, 300);
+      CGZBridge.vibrate([40, 50, 80]);
+      CGZBridge.reportScore("runner", this.score);
+    }
     if (typeof this.onGameOver === "function") {
       this.onGameOver(this.score, msg);
     }

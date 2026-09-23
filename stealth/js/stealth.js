@@ -376,6 +376,11 @@ class StealthEngine {
                     this.addFloatingText("TAKEDOWN! +250", g.x, g.y - 20, '#00f0ff');
                     this.spawnParticles(g.x, g.y, '#00f0ff', 12);
                     if (this.audio) this.audio.takedown();
+                    if (typeof CGZBridge !== 'undefined') {
+                        CGZBridge.vibrate(30);
+                        CGZBridge.unlockAchievement('ghost_infiltrator');
+                        CGZBridge.reportScore('stealth', this.score);
+                    }
                     return;
                 }
             }

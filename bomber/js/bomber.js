@@ -340,6 +340,14 @@ class BomberEngine {
                     this.spawnParticles(p.x, p.y, p.color, 25);
                     this.addFloatingText("ELIMINATED!", p.x, p.y - 20, '#ff0055');
                     if (this.audio) this.audio.eliminated();
+                    if (typeof CGZBridge !== 'undefined') {
+                        CGZBridge.shakeScreen(this.canvas, 8, 250);
+                        CGZBridge.vibrate(35);
+                        if (!p.isHuman) {
+                            CGZBridge.unlockAchievement('demolition_master');
+                            CGZBridge.reportScore('bomber', 2500);
+                        }
+                    }
                 }
             }
 

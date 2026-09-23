@@ -290,6 +290,14 @@ class BilliardsEngine {
                 this.victory = true;
                 this.score += 1000;
                 if (this.audio) this.audio.victory();
+                if (typeof CGZBridge !== 'undefined') {
+                    CGZBridge.vibrate([40, 60, 100]);
+                    CGZBridge.unlockAchievement('cue_wizard');
+                    CGZBridge.reportScore('billiards', this.score);
+                }
+            } else if (typeof CGZBridge !== 'undefined') {
+                CGZBridge.vibrate(20);
+                CGZBridge.reportScore('billiards', this.score);
             }
         }
     }

@@ -156,6 +156,13 @@ class TetrisEngine {
         if (this.collides(this.currentPiece.matrix, this.currentPiece.x, this.currentPiece.y)) {
             this.gameState = 'game_over';
             if (this.audio) this.audio.gameOver();
+            if (typeof CGZBridge !== 'undefined') {
+                CGZBridge.vibrate(40);
+                CGZBridge.reportScore('tetris', this.score);
+                if (this.score >= 1000) {
+                    CGZBridge.unlockAchievement('tetris_grandmaster');
+                }
+            }
         }
     }
 
@@ -359,6 +366,14 @@ class TetrisEngine {
             this.addFloatingText(text, this.matrixX + this.cols * this.cellSize / 2, this.matrixY + 120, '#00f0ff');
 
             if (this.audio) this.audio.lineClear(linesCleared);
+            if (typeof CGZBridge !== 'undefined') {
+                CGZBridge.vibrate(linesCleared >= 4 ? 40 : 20);
+                if (linesCleared >= 4) CGZBridge.shakeScreen(this.canvas, 6, 200);
+                CGZBridge.reportScore('tetris', this.score);
+                if (this.score >= 1000) {
+                    CGZBridge.unlockAchievement('tetris_grandmaster');
+                }
+            }
         }
     }
 

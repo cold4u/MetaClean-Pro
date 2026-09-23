@@ -365,6 +365,11 @@ class PacmanEngine {
                     this.addFloatingText(`+${points}`, g.x, g.y - 15, '#00f0ff');
                     this.spawnParticles(g.x, g.y, '#00f0ff', 12);
                     if (this.audio) this.audio.eatGhost();
+                    if (typeof CGZBridge !== 'undefined') {
+                        CGZBridge.vibrate(25);
+                        CGZBridge.unlockAchievement('pellet_devourer');
+                        CGZBridge.reportScore('pacman', this.score);
+                    }
                 } else if (g.state === 'chase') {
                     // Player died
                     this.lives--;
@@ -373,6 +378,9 @@ class PacmanEngine {
 
                     if (this.lives <= 0) {
                         this.gameState = 'game_over';
+                        if (typeof CGZBridge !== 'undefined') {
+                            CGZBridge.reportScore('pacman', this.score);
+                        }
                     } else {
                         this.resetPositions();
                     }

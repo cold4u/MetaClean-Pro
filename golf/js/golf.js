@@ -364,11 +364,21 @@ class GolfEngine {
         if (this.audio) this.audio.cupIn();
         this.spawnParticles(this.ball.x, this.ball.y, '#39ff14', 16);
 
+        const curPar = this.holes[this.currentHoleIndex].par;
         this.scorecard.push({
             hole: this.currentHoleIndex + 1,
-            par: this.holes[this.currentHoleIndex].par,
+            par: curPar,
             strokes: this.strokesThisHole
         });
+
+        if (typeof CGZBridge !== 'undefined') {
+            CGZBridge.vibrate(25);
+            if (this.strokesThisHole <= curPar) {
+                CGZBridge.unlockAchievement('hole_in_one');
+            }
+            const currentPoints = Math.max(100, (this.currentHoleIndex + 1) * 500 - this.totalStrokes * 60);
+            CGZBridge.reportScore('golf', currentPoints);
+        }
 
         setTimeout(() => {
             if (this.currentHoleIndex + 1 < this.totalHoles) {

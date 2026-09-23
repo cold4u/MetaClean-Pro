@@ -177,6 +177,10 @@ class FighterEngine {
 
         this.hitstopTimer = 0.06; // Freeze frame
         if (this.audio) this.audio.hit();
+        if (typeof CGZBridge !== 'undefined') {
+            CGZBridge.vibrate(20);
+            CGZBridge.shakeScreen(this.canvas, 5, 180);
+        }
         this.addFloatingText(`-${baseDamage}`, defender.x, defender.y - defender.h, '#ff0055');
         this.spawnParticles(defender.x + defender.w / 2, defender.y - defender.h / 2, '#ff0055', 10);
 
@@ -197,6 +201,13 @@ class FighterEngine {
         if (this.p1Wins >= 2 || this.p2Wins >= 2) {
             this.roundState = 'match_over';
             if (this.audio && this.p1Wins >= 2) this.audio.victory();
+            if (typeof CGZBridge !== 'undefined') {
+                const score = (this.p1Wins * 2500) + Math.round(this.p1.hp * 15);
+                CGZBridge.reportScore('fighter', score);
+                if (this.p1Wins >= 2) {
+                    CGZBridge.unlockAchievement('apex_striker');
+                }
+            }
         }
     }
 
