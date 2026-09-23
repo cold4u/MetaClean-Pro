@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MetaClean Pro — Privacy Image Cleaner & EXIF Editor</title>
 <link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.js"></script>
+<!-- Offline-first bundled piexifjs with fallback -->
+<script src="piexif.js"></script>
+<script>
+if (typeof piexif === 'undefined') {
+  document.write('<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.js"><\/script>');
+}
+</script>
 </head>
 <body>
 
@@ -38,7 +44,7 @@
       <div class="eyebrow">PRIVACY-FIRST IMAGE CLEANER</div>
       <h1>Clean the metadata.<br><em>Keep the image.</em></h1>
       <p>Deep-scan common image metadata, rebuild a fresh file, then verify what remains — entirely in your browser.</p>
-      <label class="drop" id="drop">
+      <label class="drop" id="drop" for="file">
         <input id="file" type="file" accept="image/jpeg,image/png,image/webp">
         <div class="upload">↑</div>
         <b>Drop an image here</b>
@@ -129,14 +135,14 @@
       <h1>Inspect &amp; edit EXIF metadata.<br><em>Keep full control.</em></h1>
       <p>View raw embedded tags, modify capture timestamps, camera gear, GPS coordinates, and copyright attribution — 100% locally in your browser.</p>
       
-      <!-- EXIF Drop Zone -->
-      <div id="exifDropZone" class="drop">
+      <!-- EXIF Drop Zone (Native clickable label + drag/drop) -->
+      <label id="exifDropZone" class="drop" for="exifFileIn">
         <input id="exifFileIn" type="file" accept=".jpg,.jpeg,image/jpeg" style="display:none">
         <div class="upload">📷</div>
         <b>Drop a JPEG photo here</b>
         <span>or <u>choose a photo</u></span>
         <small>JPEG / JPG only · EXIF parsed and modified locally</small>
-      </div>
+      </label>
       <div class="local">Processed entirely on your device. Nothing leaves your browser.</div>
     </section>
 
@@ -144,6 +150,7 @@
     <section id="exifWorkspace" class="hidden">
       <!-- File bar -->
       <div class="filebar">
+        <img id="exifThumb" alt="Thumbnail">
         <div class="filebar-info">
           <b id="exifFname">photo.jpg</b>
           <small id="exifFinfo">JPEG • 0 KB</small>

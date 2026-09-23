@@ -1,13 +1,18 @@
 /* ==========================================================================
    MetaClean Pro — Application Logic
-   1. Privacy Image Cleaner (Strip & rebuild raster via canvas)
-   2. EXIF Photo Editor (Inspect raw EXIF tags & edit metadata in-place)
+   1. Privacy Image Cleaner (Deep scan, canvas rebuild, verification)
+   2. EXIF Photo Editor (Raw tag inspector, metadata editor, in-place binary injection)
    ========================================================================== */
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtSize = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB';
 const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+const cleanStr = v => typeof v === 'string' ? v.replace(/\u0000/g, '').trim() : (v ?? '');
+
+// Prevent accidental browser navigation when dropping files anywhere on window
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
 
 // Toast Notification System
 function toast(msg, type = 'ok') {
@@ -21,10 +26,10 @@ function toast(msg, type = 'ok') {
 }
 
 // ============================================================================
-// Navigation: Mode Switcher (Cleaner <-> EXIF Editor)
+// Navigation: Mode Switcher (Quick Cleaner <-> EXIF Editor)
 // ============================================================================
-const tabCleaner = $('#tabCleaner');
-const tabEditor  = $('#tabEditor');
+const tabCleaner  = $('#tabCleaner');
+const tabEditor   = $('#tabEditor');
 const cleanerView = $('#cleanerView');
 const editorView  = $('#editorView');
 
@@ -51,10 +56,11 @@ if (tabEditor)  tabEditor.onclick  = () => switchMode('editor');
 const cleanerInput = $('#file');
 const cleanerDrop  = $('#drop');
 const cleanerApp   = $('#app');
-let cleanerOriginal = null;
+let cleanerOriginal  = null;
 let cleanerCleanBlob = null;
 
 if (cleanerInput) {
+  cleanerInput.onclick = () => { cleanerInput.value = ''; };
   cleanerInput.onchange = () => cleanerInput.files[0] && loadCleaner(cleanerInput.files[0]);
 }
 
@@ -68,8 +74,14 @@ if (cleanerDrop) {
     cleanerDrop.classList.remove('drag');
   }));
   cleanerDrop.ondrop = e => {
+    e.preventDefault();
+    cleanerDrop.classList.remove('drag');
     const f = e.dataTransfer.files[0];
-    if (f && /^image\/(jpeg|png|webp)$/i.test(f.type)) loadCleaner(f);
+    if (f && (/^image\/(jpe?g|png|webp|pjpeg)$/i.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name))) {
+      loadCleaner(f);
+    } else if (f) {
+      toast('Please drop a JPEG, PNG, or WebP image', 'err');
+    }
   };
 }
 
@@ -83,7 +95,7 @@ async function loadCleaner(file) {
   // Offer shortcut to EXIF Editor if JPEG
   const editBtn = $('#btnOpenInEditor');
   if (editBtn) {
-    if (file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name)) {
+    if (/jpe?g|pjpeg/i.test(file.type) || /\.jpe?g$/i.test(file.name)) {
       editBtn.style.display = 'inline-block';
       editBtn.onclick = () => {
         switchMode('editor');
@@ -113,10 +125,11 @@ async function scanCleaner(file) {
   const buf = new Uint8Array(await file.slice(0, 256 * 1024).arrayBuffer());
   const text = new TextDecoder('latin1').decode(buf);
 
-  if (file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name)) {
+  if (/jpe?g|pjpeg/i.test(file.type) || /\.jpe?g$/i.test(file.name || '')) {
     let p = 2;
     while (p + 4 < buf.length && buf[p] === 255) {
       let marker = buf[p + 1];
+      if (marker === 218) break; // SOS (Start of Scan) - entropy coded data starts
       let len = (buf[p + 2] << 8) | buf[p + 3];
       if (len < 2 || p + 2 + len > buf.length) break;
       let seg = text.slice(p + 4, p + 2 + len);
@@ -133,7 +146,7 @@ async function scanCleaner(file) {
     }
   }
 
-  if (file.type === 'image/png' || /\.png$/i.test(file.name)) {
+  if (/png/i.test(file.type) || /\.png$/i.test(file.name || '')) {
     let dv = new DataView(buf.buffer);
     let p = 8;
     while (p + 12 <= buf.length) {
@@ -166,6 +179,7 @@ async function scanCleaner(file) {
 }
 
 function renderCleanerList(el, m) {
+  if (!el) return;
   el.innerHTML = m.length
     ? m.map(x => `<div class="row"><span>${esc(x.label)}</span><span>${esc(x.value)}</span></div>`).join('')
     : `<div class="empty">No common metadata detected.</div>`;
@@ -179,17 +193,34 @@ if (cleanBtn) {
     cleanBtn.textContent = 'Rebuilding…';
     try {
       const img = new Image();
-      img.src = URL.createObjectURL(cleanerOriginal);
-      await img.decode();
+      const objUrl = URL.createObjectURL(cleanerOriginal);
+      img.src = objUrl;
+
+      await new Promise((resolve, reject) => {
+        if (img.decode) {
+          img.decode().then(resolve).catch(() => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+        } else {
+          img.onload = resolve;
+          img.onerror = reject;
+        }
+      });
+
       const c = document.createElement('canvas');
-      c.width = img.naturalWidth;
-      c.height = img.naturalHeight;
-      c.getContext('2d').drawImage(img, 0, 0);
+      c.width = img.naturalWidth || img.width;
+      c.height = img.naturalHeight || img.height;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0);
 
-      const type = cleanerOriginal.type === 'image/png' ? 'image/png' : 'image/jpeg';
-      cleanerCleanBlob = await new Promise(r => c.toBlob(r, type, type === 'image/jpeg' ? 0.95 : undefined));
+      const isPng = /png/i.test(cleanerOriginal.type) || /\.png$/i.test(cleanerOriginal.name);
+      const mime = isPng ? 'image/png' : 'image/jpeg';
+      cleanerCleanBlob = await new Promise(r => c.toBlob(r, mime, isPng ? undefined : 0.95));
 
-      const after = await scanCleaner(new File([cleanerCleanBlob], 'clean.' + (type === 'image/png' ? 'png' : 'jpg'), { type }));
+      cleanerCleanBlob.name = 'clean.' + (isPng ? 'png' : 'jpg');
+      const after = await scanCleaner(cleanerCleanBlob);
+
       renderCleanerList($('#after'), after);
       $('#removed').textContent = $('#count').textContent;
       $('#remaining').textContent = after.length;
@@ -200,7 +231,7 @@ if (cleanBtn) {
       toast('✅ Cleaned raster image generated', 'ok');
     } catch (e) {
       console.error(e);
-      toast('Could not process this image. Try JPEG or PNG.', 'err');
+      toast('Could not process this image. Try standard JPEG or PNG.', 'err');
     } finally {
       cleanBtn.disabled = false;
       cleanBtn.textContent = 'Clean image';
@@ -212,8 +243,9 @@ const dlCleanBtn = $('#download');
 if (dlCleanBtn) {
   dlCleanBtn.onclick = () => {
     if (!cleanerCleanBlob || !cleanerOriginal) return;
+    const isPng = /png/i.test(cleanerOriginal.type) || /\.png$/i.test(cleanerOriginal.name);
     const base = cleanerOriginal.name.replace(/\.[^.]+$/, '');
-    const ext = cleanerOriginal.type === 'image/png' ? 'png' : 'jpg';
+    const ext = isPng ? 'png' : 'jpg';
     const a = document.createElement('a');
     a.href = URL.createObjectURL(cleanerCleanBlob);
     a.download = base + '-clean.' + ext;
@@ -224,6 +256,7 @@ if (dlCleanBtn) {
 
 const resetCleaner = () => {
   cleanerApp.classList.add('hidden');
+  $('#result').classList.add('hidden');
   if (cleanerInput) cleanerInput.value = '';
   cleanerOriginal = null;
   cleanerCleanBlob = null;
@@ -243,34 +276,45 @@ let _exif = null;
 function exifToHTML(s) {
   if (!s || typeof s !== 'string') return '';
   try {
-    const [d, t = '00:00:00'] = s.split(' ');
+    const clean = s.replace(/\u0000/g, '').trim();
+    const [d, t = '00:00:00'] = clean.split(' ');
     return d.replace(/:/g, '-') + 'T' + t.slice(0, 5);
   } catch { return ''; }
 }
 
 function htmlToExif(s) {
   if (!s) return '';
-  const [d, t = '00:00'] = s.split('T');
-  return d.replace(/-/g, ':') + ' ' + t + ':00';
+  const clean = s.trim();
+  const [d, t = '00:00'] = clean.split('T');
+  return d.replace(/-/g, ':') + ' ' + t.slice(0, 5) + ':00';
 }
 
 // GPS Conversions
 function dmsToDec(dms, ref) {
   if (!Array.isArray(dms) || dms.length < 3) return '';
   try {
-    const r = a => a[0] / a[1];
+    const r = a => (Array.isArray(a) && a[1]) ? a[0] / a[1] : (Number(a) || 0);
     let v = r(dms[0]) + r(dms[1]) / 60 + r(dms[2]) / 3600;
-    if (ref === 'S' || ref === 'W') v = -v;
+    const refStr = String(ref || '').replace(/\u0000/g, '').trim().toUpperCase();
+    if (refStr.startsWith('S') || refStr.startsWith('W')) v = -v;
     return v.toFixed(6);
   } catch { return ''; }
 }
 
 function decToDMS(deg) {
   const abs = Math.abs(deg);
-  const d = Math.floor(abs);
-  const mf = (abs - d) * 60;
-  const m = Math.floor(mf);
-  const s = Math.round((mf - m) * 60 * 100);
+  let d = Math.floor(abs);
+  let mf = (abs - d) * 60;
+  let m = Math.floor(mf);
+  let s = Math.round((mf - m) * 60 * 100);
+  if (s >= 6000) {
+    s -= 6000;
+    m += 1;
+  }
+  if (m >= 60) {
+    m -= 60;
+    d += 1;
+  }
   return [[d, 1], [m, 1], [s, 100]];
 }
 
@@ -282,6 +326,15 @@ function rat(val, denom = 1000) {
 const exifDropZone = $('#exifDropZone');
 const exifFileIn   = $('#exifFileIn');
 
+if (exifFileIn) {
+  exifFileIn.onclick = () => { exifFileIn.value = ''; };
+  exifFileIn.onchange = () => {
+    if (exifFileIn.files && exifFileIn.files[0]) {
+      loadExifFile(exifFileIn.files[0]);
+    }
+  };
+}
+
 if (exifDropZone) {
   exifDropZone.addEventListener('dragover', e => {
     e.preventDefault();
@@ -291,41 +344,44 @@ if (exifDropZone) {
   exifDropZone.addEventListener('drop', e => {
     e.preventDefault();
     exifDropZone.classList.remove('on');
-    if (e.dataTransfer.files[0]) loadExifFile(e.dataTransfer.files[0]);
-  });
-}
-
-if (exifFileIn) {
-  exifFileIn.addEventListener('change', e => {
-    if (e.target.files[0]) loadExifFile(e.target.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      loadExifFile(e.dataTransfer.files[0]);
+    }
   });
 }
 
 function loadExifFile(file) {
-  if (!/jpe?g/i.test(file.type) && !/\.jpe?g$/i.test(file.name)) {
+  const isJpeg = /jpe?g|pjpeg/i.test(file.type) || /\.jpe?g$/i.test(file.name);
+  if (!isJpeg) {
     toast('⚠ Only JPEG / JPG photos are supported in the EXIF Editor', 'err');
     return;
   }
-  _name = file.name;
+  _name = file.name || 'photo.jpg';
 
   const reader = new FileReader();
   reader.onload = ev => {
     const dataURL = ev.target.result;
-    $('#previewImg').src = dataURL;
-    $('#exifFname').textContent = file.name;
+    
+    // Set previews
+    const previewEl = $('#previewImg');
+    if (previewEl) previewEl.src = dataURL;
+    const thumbEl = $('#exifThumb');
+    if (thumbEl) thumbEl.src = dataURL;
+
+    $('#exifFname').textContent = _name;
     $('#exifFinfo').textContent = `${file.type || 'image/jpeg'} • ${fmtSize(file.size)}`;
-    $('#fileInfo').textContent = `${file.name} · ${fmtSize(file.size)}`;
+    $('#fileInfo').textContent = `${_name} · ${fmtSize(file.size)}`;
 
     try {
       _bin = atob(dataURL.split(',')[1]);
-    } catch {
-      toast('Could not decode the photo binary', 'err');
+    } catch (e) {
+      toast('Could not decode photo data', 'err');
       return;
     }
 
     try {
       if (typeof piexif === 'undefined') {
-        throw new Error('piexif library not loaded');
+        throw new Error('piexif library not ready');
       }
       _exif = piexif.load(_bin);
     } catch (err) {
@@ -358,18 +414,28 @@ function fillExifForm() {
   setVal('f_dt',  exifToHTML(z0[I.DateTime]));
   setVal('f_dtd', exifToHTML(ze[E.DateTimeDigitized]));
 
-  setVal('f_make',  z0[I.Make]);
-  setVal('f_model', z0[I.Model]);
-  setVal('f_soft',  z0[I.Software]);
-  setVal('f_iso',   ze[E.ISOSpeedRatings]);
+  setVal('f_make',  cleanStr(z0[I.Make]));
+  setVal('f_model', cleanStr(z0[I.Model]));
+  setVal('f_soft',  cleanStr(z0[I.Software]));
+
+  const isoRaw = ze[E.ISOSpeedRatings];
+  const isoVal = Array.isArray(isoRaw) ? isoRaw[0] : isoRaw;
+  setVal('f_iso', isoVal ?? '');
 
   setVal('f_lat', gp[G.GPSLatitude]  ? dmsToDec(gp[G.GPSLatitude],  gp[G.GPSLatitudeRef])  : '');
   setVal('f_lng', gp[G.GPSLongitude] ? dmsToDec(gp[G.GPSLongitude], gp[G.GPSLongitudeRef]) : '');
-  setVal('f_alt', gp[G.GPSAltitude]  ? (gp[G.GPSAltitude][0] / gp[G.GPSAltitude][1]).toFixed(1) : '');
 
-  setVal('f_desc',   z0[I.ImageDescription]);
-  setVal('f_artist', z0[I.Artist]);
-  setVal('f_copy',   z0[I.Copyright]);
+  let altVal = '';
+  if (gp[G.GPSAltitude] && Array.isArray(gp[G.GPSAltitude]) && gp[G.GPSAltitude][1]) {
+    let a = gp[G.GPSAltitude][0] / gp[G.GPSAltitude][1];
+    if (gp[G.GPSAltitudeRef] === 1) a = -a;
+    altVal = a.toFixed(1);
+  }
+  setVal('f_alt', altVal);
+
+  setVal('f_desc',   cleanStr(z0[I.ImageDescription]));
+  setVal('f_artist', cleanStr(z0[I.Artist]));
+  setVal('f_copy',   cleanStr(z0[I.Copyright]));
 }
 
 // Render Raw EXIF Tags Inspector
@@ -411,7 +477,7 @@ function renderRawExif() {
   };
 
   const fmt = v => typeof v === 'string'
-    ? v.replace(/ /g, '').replace(/^\s+|\s+$/g, '')
+    ? v.replace(/\u0000/g, '').trim()
     : JSON.stringify(v);
 
   const rows = [];
@@ -471,25 +537,29 @@ function applyExifForm() {
   else delete _exif['Exif'][E.ISOSpeedRatings];
 
   // GPS
-  const latRaw = $('#f_lat').value;
-  const lngRaw = $('#f_lng').value;
-  const altRaw = $('#f_alt').value;
+  const latRaw = $('#f_lat').value.trim();
+  const lngRaw = $('#f_lng').value.trim();
+  const altRaw = $('#f_alt').value.trim();
 
   if (latRaw !== '' && lngRaw !== '') {
     const lat = parseFloat(latRaw);
     const lng = parseFloat(lngRaw);
-    _exif['GPS'][G.GPSLatitude]     = decToDMS(lat);
-    _exif['GPS'][G.GPSLatitudeRef]  = lat >= 0 ? 'N' : 'S';
-    _exif['GPS'][G.GPSLongitude]    = decToDMS(lng);
-    _exif['GPS'][G.GPSLongitudeRef] = lng >= 0 ? 'E' : 'W';
+    if (!isNaN(lat) && !isNaN(lng)) {
+      _exif['GPS'][G.GPSLatitude]     = decToDMS(lat);
+      _exif['GPS'][G.GPSLatitudeRef]  = lat >= 0 ? 'N' : 'S';
+      _exif['GPS'][G.GPSLongitude]    = decToDMS(lng);
+      _exif['GPS'][G.GPSLongitudeRef] = lng >= 0 ? 'E' : 'W';
+    }
   } else {
     [G.GPSLatitude, G.GPSLatitudeRef, G.GPSLongitude, G.GPSLongitudeRef].forEach(t => delete _exif['GPS'][t]);
   }
 
   if (altRaw !== '') {
     const alt = parseFloat(altRaw);
-    _exif['GPS'][G.GPSAltitude]    = rat(Math.abs(alt));
-    _exif['GPS'][G.GPSAltitudeRef] = alt < 0 ? 1 : 0;
+    if (!isNaN(alt)) {
+      _exif['GPS'][G.GPSAltitude]    = rat(Math.abs(alt));
+      _exif['GPS'][G.GPSAltitudeRef] = alt < 0 ? 1 : 0;
+    }
   } else {
     [G.GPSAltitude, G.GPSAltitudeRef].forEach(t => delete _exif['GPS'][t]);
   }
@@ -508,7 +578,10 @@ function downloadBin(bin, suffix) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = _name.replace(/(\.[^.]+)$/, `${suffix}$1`);
+  const downloadName = /\.[^.]+$/.test(_name)
+    ? _name.replace(/(\.[^.]+)$/, `${suffix}$1`)
+    : `${_name}${suffix}.jpg`;
+  a.download = downloadName;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
@@ -558,7 +631,7 @@ function resetExifTool() {
 }
 
 // Wire EXIF Action Buttons
-if ($('#btnSaveExif'))      $('#btnSaveExif').onclick      = saveExif;
-if ($('#btnStripExif'))     $('#btnStripExif').onclick     = stripExif;
-if ($('#btnResetExif'))     $('#btnResetExif').onclick     = resetExifTool;
-if ($('#btnTopResetExif'))  $('#btnTopResetExif').onclick  = resetExifTool;
+if ($('#btnSaveExif'))     $('#btnSaveExif').onclick     = saveExif;
+if ($('#btnStripExif'))    $('#btnStripExif').onclick    = stripExif;
+if ($('#btnResetExif'))    $('#btnResetExif').onclick    = resetExifTool;
+if ($('#btnTopResetExif')) $('#btnTopResetExif').onclick = resetExifTool;

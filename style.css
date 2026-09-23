@@ -176,6 +176,7 @@ header {
   background: #141326;
 }
 .drop input { display: none; }
+.drop * { pointer-events: none; }
 .upload {
   width: 52px;
   height: 52px;
