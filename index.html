@@ -1,151 +1,276 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MetaClean Pro — Private Image Cleaner</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MetaClean Pro — Privacy Image Cleaner & EXIF Editor</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.js"></script>
 </head>
 <body>
-<!-- Cyber Arcade Modal (19-Game Master Arcade Cabinet) -->
-<div id="arcadeModal" class="arcade-modal hidden" aria-hidden="true" role="dialog" aria-label="Cyber Arcade Master Cabinet">
-  <div class="arcade-modal-backdrop" id="arcadeBackdrop"></div>
-  <div class="arcade-modal-dialog">
-    <div class="arcade-modal-header">
-      <div class="arcade-modal-title">
-        <span class="arcade-tag">19-GAME ARCADE</span>
-        <div class="arcade-tab-bar">
-          <button class="arcade-tab-btn active" id="tabArcadeTurbo" data-src="game/index.html">🏎️ Turbo Drive</button>
-          <button class="arcade-tab-btn" id="tabArcadePuzzle" data-src="puzzle/index.html">🧩 Cyber Circuit</button>
-          <button class="arcade-tab-btn" id="tabArcadeBreaker" data-src="breaker/index.html">🧱 Neon Breaker</button>
-          <button class="arcade-tab-btn" id="tabArcadeStrike" data-src="strike/index.html">🚀 Cyber Strike</button>
-          <button class="arcade-tab-btn" id="tabArcadeSnake" data-src="snake/index.html">🐍 Neon Snake</button>
-          <button class="arcade-tab-btn" id="tabArcadeJump" data-src="jump/index.html">🦘 Quantum Jump</button>
-          <button class="arcade-tab-btn" id="tabArcadePulse" data-src="pulse/index.html">🎵 Cyber Pulse</button>
-          <button class="arcade-tab-btn" id="tabArcadeRunner" data-src="runner/index.html">⚡ Gravity Runner</button>
-          <button class="arcade-tab-btn" id="tabArcadeDefense" data-src="defense/index.html">🛡️ Neon Defense</button>
-          <button class="arcade-tab-btn" id="tabArcadeSurvivor" data-src="survivor/index.html">🧬 Cyber Survivor</button>
-          <button class="arcade-tab-btn" id="tabArcadePortal" data-src="portal/index.html">🌀 Quantum Portal</button>
-          <button class="arcade-tab-btn" id="tabArcadeRogue" data-src="rogue/index.html">🗡️ Neon Rogue</button>
-          <button class="arcade-tab-btn" id="tabArcadeTower" data-src="tower/index.html">🏰 Matrix Defense</button>
-          <button class="arcade-tab-btn" id="tabArcadeKart" data-src="kart/index.html">🏎️ Cyber Drift</button>
-          <button class="arcade-tab-btn" id="tabArcadeMatch" data-src="match/index.html">✨ Neon Alchemist</button>
-          <button class="arcade-tab-btn" id="tabArcadePinball" data-src="pinball/index.html">⚡ Quantum Pinball</button>
-          <button class="arcade-tab-btn" id="tabArcadeShinobi" data-src="shinobi/index.html">⚔️ Neon Shinobi</button>
-          <button class="arcade-tab-btn" id="tabArcadeDeck" data-src="deck/index.html">🃏 Cyber Deck</button>
-          <button class="arcade-tab-btn" id="tabArcadeFlight" data-src="flight/index.html">✈️ Aero Striker</button>
-          <button class="arcade-tab-btn" id="tabArcadeBilliards" data-src="billiards/index.html">🎱 Neon Pool</button>
-          <button class="arcade-tab-btn" id="tabArcadeTactics" data-src="tactics/index.html">🤖 Mech Warfare</button>
-          <button class="arcade-tab-btn" id="tabArcadeMining" data-src="mining/index.html">⛏️ Deep Core</button>
-          <button class="arcade-tab-btn" id="tabArcadeGolf" data-src="golf/index.html">⛳ Quantum Golf</button>
-          <button class="arcade-tab-btn" id="tabArcadeFighter" data-src="fighter/index.html">🥊 Cyber Brawler</button>
-          <button class="arcade-tab-btn" id="tabArcadeStealth" data-src="stealth/index.html">🕵️ Ghost Protocol</button>
-          <button class="arcade-tab-btn" id="tabArcadeBomber" data-src="bomber/index.html">💣 Grid Detonator</button>
-          <button class="arcade-tab-btn" id="tabArcadePacman" data-src="pacman/index.html">👾 Quantum Maze</button>
-          <button class="arcade-tab-btn" id="tabArcadeTycoon" data-src="tycoon/index.html">⚡ City Tycoon</button>
-          <button class="arcade-tab-btn" id="tabArcadeTetris" data-src="tetris/index.html">🧱 Quantum Fall</button>
-        </div>
-      </div>
-      <div class="arcade-modal-actions">
-        <a id="arcadeTabLink" href="game/index.html" target="_blank" rel="noopener noreferrer" class="arcade-action-btn" title="Open in new tab">Full Tab ↗</a>
-        <button id="closeArcadeBtn" class="arcade-action-btn close-btn" title="Close Arcade [Esc]">✕</button>
-      </div>
-    </div>
-    <div class="arcade-modal-body">
-      <iframe id="arcadeIframe" src="about:blank" data-src="game/index.html" class="arcade-iframe" title="Cyber Arcade Game" allow="autoplay; fullscreen"></iframe>
-    </div>
-  </div>
-</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <header>
-  <a class="brand"><span>✦</span> MetaClean <i>PRO</i></a>
+  <div class="header-left">
+    <a class="brand" href="#"><span>✦</span> MetaClean <i>PRO</i></a>
+  </div>
+  <nav class="mode-nav" aria-label="Mode Navigation">
+    <button id="tabCleaner" class="nav-tab active" type="button">
+      <span class="nav-tab-icon">🧹</span> Quick Cleaner
+    </button>
+    <button id="tabEditor" class="nav-tab" type="button">
+      <span class="nav-tab-icon">✏️</span> EXIF Editor
+    </button>
+  </nav>
   <div class="header-right">
-    <button id="openArcadeBtn" class="arcade-btn" title="Play Cyber Arcade Games">🎮 Cyber Arcade Hub (29 Games)</button>
     <div class="privacy">🔒 Runs locally</div>
   </div>
 </header>
+
 <main>
-<section class="hero">
-<div class="eyebrow">PRIVACY-FIRST IMAGE CLEANER</div>
-<h1>Clean the metadata.<br><em>Keep the image.</em></h1>
-<p>Deep-scan common image metadata, rebuild a fresh file, then verify what remains — entirely in your browser.</p>
-<label class="drop" id="drop"><input id="file" type="file" accept="image/jpeg,image/png,image/webp">
-<div class="upload">↑</div><b>Drop an image here</b><span>or <u>choose a file</u></span><small>JPEG • PNG • WebP</small></label>
-<div class="local">Your file is processed on this device. It is not uploaded to a server.</div>
-</section>
+  <!-- =========================================================================
+       SECTION 1: QUICK CLEANER (Strip & sanitize metadata)
+       ========================================================================= -->
+  <div id="cleanerView" class="view-panel">
+    <section class="hero">
+      <div class="eyebrow">PRIVACY-FIRST IMAGE CLEANER</div>
+      <h1>Clean the metadata.<br><em>Keep the image.</em></h1>
+      <p>Deep-scan common image metadata, rebuild a fresh file, then verify what remains — entirely in your browser.</p>
+      <label class="drop" id="drop">
+        <input id="file" type="file" accept="image/jpeg,image/png,image/webp">
+        <div class="upload">↑</div>
+        <b>Drop an image here</b>
+        <span>or <u>choose a file</u></span>
+        <small>JPEG • PNG • WebP</small>
+      </label>
+      <div class="local">Your file is processed on this device. It is not uploaded to a server.</div>
+    </section>
 
-<section id="app" class="hidden">
-<div class="filebar"><img id="thumb"><div><b id="fname"></b><small id="finfo"></small></div><button id="reset">Remove</button></div>
-<div class="toolbar"><div><b>Deep scan</b><span id="scanState">Scanning…</span></div><div class="meter"><i id="meter"></i></div></div>
-
-<div class="columns">
-<section class="card">
-<div class="head"><div><h2>Metadata detected</h2><p>Common embedded information found before cleaning.</p></div><strong id="count">0</strong></div>
-<div id="before" class="list"><div class="empty">Scanning file…</div></div>
-</section>
-<section class="card clean">
-<div class="shield">✓</div><h2>Clean & verify</h2>
-<p>Creates a new raster image without common EXIF, XMP, IPTC and application metadata.</p>
-<button id="clean">Clean image</button>
-<small>Original file is never modified.</small>
-</section>
-</div>
-
-<section id="result" class="card result hidden">
-<div class="head"><div><h2>Verification</h2><p>We scan the generated file again after cleaning.</p></div><span id="resultBadge"></span></div>
-<div class="verify"><div><b id="removed">—</b><span>detected before</span></div><div class="arrow">→</div><div><b id="remaining">—</b><span>detected after</span></div></div>
-<div id="after" class="list"></div>
-<div class="actions"><button id="download" class="primary">Download cleaned image</button><button id="again">Clean another</button></div>
-</section>
-</section>
-
-<section class="how"><h2>What it removes</h2><div class="features">
-<div><b>EXIF</b><span>Camera, lens, dates and other EXIF fields.</span></div>
-<div><b>LOCATION</b><span>GPS coordinates and location fields.</span></div>
-<div><b>XMP / IPTC</b><span>Common editing, author and publishing metadata.</span></div>
-<div><b>APP DATA</b><span>Common JPEG application segments and PNG text metadata.</span></div>
-</div><p class="limit">No browser tool can guarantee removal of every proprietary or steganographic payload. Pixel content is not altered to evade AI detection or provenance systems.</p></section>
-
-<section class="arcade-banner-section">
-  <div class="arcade-banner-card">
-    <div class="arcade-banner-content">
-      <span class="arcade-banner-tag">BUILT-IN RETRO ARCADE CABINET — 29 HIGH-OCTANE GAMES</span>
-      <h2>Take a breather with our 29-Game Cyber Arcade Cabinet!</h2>
-      <p>Enjoy twenty-nine studio-grade browser games with rich gameplay depth, roguelike loops, bullet deflection, Mode-7 pseudo-3D curves, tactical deckbuilding, and Web Audio synthesizers: from high-octane <strong>Turbo Drive</strong> & <strong>Cyber Drift</strong>, to mind-bending <strong>Quantum Portal</strong> & <strong>Cyber Circuit</strong>, roguelike dungeon crawling in <strong>Neon Rogue</strong> & <strong>Cyber Survivor</strong>, tactical tower defense in <strong>Matrix Defense</strong>, deep deck duels in <strong>Cyber Deck</strong>, action slashing in <strong>Neon Shinobi</strong>, match-3 RPG spellcasting in <strong>Neon Alchemist</strong>, authentic physics in <strong>Quantum Pinball</strong>, and 2.5D flight dogfights in <strong>Aero Striker</strong>.</p>
-      <div class="arcade-banner-btns">
-        <button id="arcadeBannerBtn" class="primary-arcade-btn">🏎️ Turbo Drive</button>
-        <button id="arcadePuzzleBtn" class="primary-arcade-btn puzzle-btn">🧩 Cyber Circuit</button>
-        <button id="arcadeBreakerBtn" class="primary-arcade-btn breaker-btn">🧱 Neon Breaker</button>
-        <button id="arcadeStrikeBtn" class="primary-arcade-btn strike-btn">🚀 Cyber Strike</button>
-        <button id="arcadeSnakeBtn" class="primary-arcade-btn snake-btn">🐍 Neon Snake</button>
-        <button id="arcadeJumpBtn" class="primary-arcade-btn jump-btn">🦘 Quantum Jump</button>
-        <button id="arcadePulseBtn" class="primary-arcade-btn pulse-btn">🎵 Cyber Pulse</button>
-        <button id="arcadeRunnerBtn" class="primary-arcade-btn runner-btn">⚡ Gravity Runner</button>
-        <button id="arcadeDefenseBtn" class="primary-arcade-btn defense-btn">🛡️ Neon Defense</button>
-        <button id="arcadeSurvivorBtn" class="primary-arcade-btn survivor-btn">🧬 Cyber Survivor</button>
-        <button id="arcadePortalBtn" class="primary-arcade-btn portal-btn">🌀 Quantum Portal</button>
-        <button id="arcadeRogueBtn" class="primary-arcade-btn rogue-btn">🗡️ Neon Rogue</button>
-        <button id="arcadeTowerBtn" class="primary-arcade-btn tower-btn">🏰 Matrix Defense</button>
-        <button id="arcadeKartBtn" class="primary-arcade-btn kart-btn">🏎️ Cyber Drift</button>
-        <button id="arcadeMatchBtn" class="primary-arcade-btn match-btn">✨ Neon Alchemist</button>
-        <button id="arcadePinballBtn" class="primary-arcade-btn pinball-btn">⚡ Quantum Pinball</button>
-        <button id="arcadeShinobiBtn" class="primary-arcade-btn shinobi-btn">⚔️ Neon Shinobi</button>
-        <button id="arcadeDeckBtn" class="primary-arcade-btn deck-btn">🃏 Cyber Deck</button>
-        <button id="arcadeFlightBtn" class="primary-arcade-btn flight-btn">✈️ Aero Striker</button>
-        <button id="arcadeBilliardsBtn" class="primary-arcade-btn billiards-btn">🎱 Neon Pool</button>
-        <button id="arcadeTacticsBtn" class="primary-arcade-btn tactics-btn">🤖 Mech Warfare</button>
-        <button id="arcadeMiningBtn" class="primary-arcade-btn mining-btn">⛏️ Deep Core</button>
-        <button id="arcadeGolfBtn" class="primary-arcade-btn golf-btn">⛳ Quantum Golf</button>
-        <button id="arcadeFighterBtn" class="primary-arcade-btn fighter-btn">🥊 Cyber Brawler</button>
-        <button id="arcadeStealthBtn" class="primary-arcade-btn stealth-btn">🕵️ Ghost Protocol</button>
-        <button id="arcadeBomberBtn" class="primary-arcade-btn bomber-btn">💣 Grid Detonator</button>
-        <button id="arcadePacmanBtn" class="primary-arcade-btn pacman-btn">👾 Quantum Maze</button>
-        <button id="arcadeTycoonBtn" class="primary-arcade-btn tycoon-btn">⚡ City Tycoon</button>
-        <button id="arcadeTetrisBtn" class="primary-arcade-btn tetris-btn">🧱 Quantum Fall</button>
+    <section id="app" class="hidden">
+      <div class="filebar">
+        <img id="thumb" alt="Thumbnail">
+        <div class="filebar-info">
+          <b id="fname"></b>
+          <small id="finfo"></small>
+        </div>
+        <div class="filebar-actions">
+          <button id="btnOpenInEditor" class="btn-cleaner-edit" type="button" style="display:none;" title="Open this photo in the EXIF Editor">✏️ Edit EXIF Tags</button>
+          <button id="reset" type="button">Remove</button>
+        </div>
       </div>
-    </div>
+      
+      <div class="toolbar">
+        <div><b>Deep scan</b><span id="scanState">Scanning…</span></div>
+        <div class="meter"><i id="meter"></i></div>
+      </div>
+
+      <div class="columns">
+        <section class="card">
+          <div class="head">
+            <div>
+              <h2>Metadata detected</h2>
+              <p>Common embedded information found before cleaning.</p>
+            </div>
+            <strong id="count">0</strong>
+          </div>
+          <div id="before" class="list"><div class="empty">Scanning file…</div></div>
+        </section>
+
+        <section class="card clean">
+          <div class="shield">✓</div>
+          <h2>Clean &amp; verify</h2>
+          <p>Creates a new raster image without common EXIF, XMP, IPTC and application metadata.</p>
+          <button id="clean" type="button">Clean image</button>
+          <small>Original file is never modified.</small>
+        </section>
+      </div>
+
+      <section id="result" class="card result hidden">
+        <div class="head">
+          <div>
+            <h2>Verification</h2>
+            <p>We scan the generated file again after cleaning.</p>
+          </div>
+          <span id="resultBadge"></span>
+        </div>
+        <div class="verify">
+          <div><b id="removed">—</b><span>detected before</span></div>
+          <div class="arrow">→</div>
+          <div><b id="remaining">—</b><span>detected after</span></div>
+        </div>
+        <div id="after" class="list"></div>
+        <div class="actions">
+          <button id="download" class="primary" type="button">Download cleaned image</button>
+          <button id="again" type="button">Clean another</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="how">
+      <h2>What it removes</h2>
+      <div class="features">
+        <div><b>EXIF</b><span>Camera, lens, dates and other EXIF fields.</span></div>
+        <div><b>LOCATION</b><span>GPS coordinates and location fields.</span></div>
+        <div><b>XMP / IPTC</b><span>Common editing, author and publishing metadata.</span></div>
+        <div><b>APP DATA</b><span>Common JPEG application segments and PNG text metadata.</span></div>
+      </div>
+      <p class="limit">No browser tool can guarantee removal of every proprietary or steganographic payload. Pixel content is not altered to evade AI detection or provenance systems.</p>
+    </section>
   </div>
-</section>
+
+  <!-- =========================================================================
+       SECTION 2: EXIF EDITOR (Precision inspector & tag modifier)
+       ========================================================================= -->
+  <div id="editorView" class="view-panel hidden">
+    <section class="hero">
+      <div class="eyebrow">LOCAL EXIF PHOTO INSPECTOR &amp; EDITOR</div>
+      <h1>Inspect &amp; edit EXIF metadata.<br><em>Keep full control.</em></h1>
+      <p>View raw embedded tags, modify capture timestamps, camera gear, GPS coordinates, and copyright attribution — 100% locally in your browser.</p>
+      
+      <!-- EXIF Drop Zone -->
+      <div id="exifDropZone" class="drop">
+        <input id="exifFileIn" type="file" accept=".jpg,.jpeg,image/jpeg" style="display:none">
+        <div class="upload">📷</div>
+        <b>Drop a JPEG photo here</b>
+        <span>or <u>choose a photo</u></span>
+        <small>JPEG / JPG only · EXIF parsed and modified locally</small>
+      </div>
+      <div class="local">Processed entirely on your device. Nothing leaves your browser.</div>
+    </section>
+
+    <!-- EXIF Editor Workspace -->
+    <section id="exifWorkspace" class="hidden">
+      <!-- File bar -->
+      <div class="filebar">
+        <div class="filebar-info">
+          <b id="exifFname">photo.jpg</b>
+          <small id="exifFinfo">JPEG • 0 KB</small>
+        </div>
+        <div class="filebar-actions">
+          <button id="btnTopResetExif" type="button">↩ Upload another photo</button>
+        </div>
+      </div>
+
+      <div class="exif-grid">
+        <!-- LEFT: Preview + Raw EXIF Inspector -->
+        <div class="exif-col-side">
+          <div class="card">
+            <div class="card-sh">Preview</div>
+            <img id="previewImg" class="preview-img" alt="Photo Preview">
+            <div id="fileInfo" class="preview-info"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-sh">
+              <span>Raw EXIF Tags</span>
+              <span id="rawExifBadge" class="raw-badge">0 tags</span>
+            </div>
+            <div id="rawExif" class="raw-exif-list"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Form Fields -->
+        <div class="exif-col-main">
+          <!-- Date & Time -->
+          <div class="card">
+            <div class="card-sh">📅 Date &amp; Time</div>
+            <div class="fields-stack">
+              <div class="f-group">
+                <label for="f_dto">Date Taken (DateTimeOriginal)</label>
+                <input type="datetime-local" id="f_dto">
+              </div>
+              <div class="f-group">
+                <label for="f_dt">Date Modified (DateTime)</label>
+                <input type="datetime-local" id="f_dt">
+              </div>
+              <div class="f-group">
+                <label for="f_dtd">Date Digitized (DateTimeDigitized)</label>
+                <input type="datetime-local" id="f_dtd">
+              </div>
+            </div>
+          </div>
+
+          <!-- Camera -->
+          <div class="card">
+            <div class="card-sh">📷 Camera Hardware</div>
+            <div class="fields-grid g2">
+              <div class="f-group">
+                <label for="f_make">Make</label>
+                <input type="text" id="f_make" placeholder="Apple, Canon, Sony…">
+              </div>
+              <div class="f-group">
+                <label for="f_model">Model</label>
+                <input type="text" id="f_model" placeholder="iPhone 15 Pro, EOS R5…">
+              </div>
+              <div class="f-group">
+                <label for="f_soft">Software</label>
+                <input type="text" id="f_soft" placeholder="Lightroom, Photoshop…">
+              </div>
+              <div class="f-group">
+                <label for="f_iso">ISO Speed</label>
+                <input type="number" id="f_iso" placeholder="100">
+              </div>
+            </div>
+          </div>
+
+          <!-- GPS Location -->
+          <div class="card">
+            <div class="card-sh">📍 GPS Location</div>
+            <div class="fields-grid g3">
+              <div class="f-group">
+                <label for="f_lat">Latitude</label>
+                <input type="number" id="f_lat" step="0.000001" placeholder="28.6139">
+                <div class="hint">Negative = South</div>
+              </div>
+              <div class="f-group">
+                <label for="f_lng">Longitude</label>
+                <input type="number" id="f_lng" step="0.000001" placeholder="77.2090">
+                <div class="hint">Negative = West</div>
+              </div>
+              <div class="f-group">
+                <label for="f_alt">Altitude (m)</label>
+                <input type="number" id="f_alt" step="0.1" placeholder="216">
+              </div>
+            </div>
+          </div>
+
+          <!-- Attribution -->
+          <div class="card">
+            <div class="card-sh">👤 Attribution &amp; Copyright</div>
+            <div class="fields-stack">
+              <div class="f-group">
+                <label for="f_desc">Description / Caption</label>
+                <input type="text" id="f_desc" placeholder="Photo caption or description…">
+              </div>
+              <div class="f-group">
+                <label for="f_artist">Artist / Photographer</label>
+                <input type="text" id="f_artist" placeholder="Your Name">
+              </div>
+              <div class="f-group">
+                <label for="f_copy">Copyright</label>
+                <input type="text" id="f_copy" placeholder="© 2024 Your Name">
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="exif-actions">
+            <button id="btnSaveExif" class="btn-action btn-primary" type="button">💾 Save &amp; Download</button>
+            <button id="btnStripExif" class="btn-action btn-danger" type="button" title="Remove all EXIF data and download">🗑️ Strip All EXIF</button>
+            <button id="btnResetExif" class="btn-action btn-secondary" type="button" title="Upload another photo">↩ New Photo</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </main>
-<footer>MetaClean Pro <span>Client-side processing • No uploads</span></footer>
+
+<footer>
+  MetaClean Pro <span>Client-side processing • No uploads • Open source</span>
+</footer>
+
 <script src="app.js"></script>
-</body></html>
+</body>
+</html>

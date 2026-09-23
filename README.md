@@ -1,19 +1,32 @@
 # MetaClean Pro
 
-A client-side image metadata cleaner.
+Privacy-first browser image metadata cleaner and EXIF tag editor. Runs 100% locally on your device with no server uploads.
 
-## Run
-Open `index.html` directly, or serve the folder with any static web server.
+## Features
 
-Example:
-`python3 -m http.server 8000`
+### 1. 🧹 Quick Metadata Cleaner
+- **Deep Scan**: Scans JPEG APP segments, EXIF, XMP, and IPTC blocks, PNG text chunks (`tEXt`, `zTXt`, `iTXt`), and markers for GPS, camera hardware, dates, software, and provenance.
+- **Canvas Rebuild**: Re-encodes raster images through HTML5 Canvas into fresh JPEG, PNG, or WebP files, stripping embedded metadata payloads.
+- **Verification**: Automatically scans the generated output to verify stripped fields before downloading.
 
-## What it does
-- Scans common JPEG APP segments and EXIF/XMP/IPTC markers.
-- Scans common PNG text chunks.
-- Checks for common GPS/camera/date/author/software/provenance markers.
-- Rebuilds JPEG/PNG through the browser canvas and rescans the output.
-- Does not upload files.
+### 2. ✏️ EXIF Photo Editor
+- **Tag Inspector**: Parses and displays raw EXIF tags from `IFD0`, `Exif`, and `GPS` IFD blocks with color-coded syntax.
+- **Precision Metadata Editing**:
+  - **Date & Time**: Date Taken (`DateTimeOriginal`), Date Modified (`DateTime`), and Date Digitized (`DateTimeDigitized`).
+  - **Camera Hardware**: Make, Model, Processing Software, and ISO Speed.
+  - **GPS Location**: Latitude, Longitude, and Altitude with decimal/DMS coordinates.
+  - **Attribution & Copyright**: Description / Caption, Artist / Photographer, and Copyright notice.
+- **In-Place Injection**: Injects updated EXIF metadata directly into JPEG binary without image re-compression using `piexifjs`.
+- **Strip All EXIF**: Wipes all EXIF IFD records while retaining original image binary.
 
-## Limitations
-The inspector is a lightweight browser scanner, not a complete parser for every proprietary format. Canvas re-encoding strips common file metadata but cannot guarantee removal of every hidden/proprietary payload. It intentionally does not modify pixels to evade AI detectors or provenance systems. JPEG output is recompressed.
+## Run Locally
+
+Open `index.html` in any modern web browser or serve with a local static server:
+
+```bash
+python3 -m http.server 8000
+```
+
+## Privacy & Security
+
+All image reading, canvas rebuilding, EXIF parsing, and downloads occur entirely inside the client's browser using standard Web APIs. No photos, EXIF fields, or location data are ever transmitted to an external server.

@@ -1,122 +1,564 @@
-const $=s=>document.querySelector(s), input=$("#file"), drop=$("#drop"), app=$("#app");
-let original=null,cleanBlob=null;
-const fmt=n=>n<1024?n+" B":n<1048576?(n/1024).toFixed(1)+" KB":(n/1048576).toFixed(2)+" MB";
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-input.onchange=()=>input.files[0]&&load(input.files[0]);
-["dragenter","dragover"].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.add("drag")}));
-["dragleave","drop"].forEach(e=>drop.addEventListener(e,x=>{x.preventDefault();drop.classList.remove("drag")}));
-drop.ondrop=e=>{let f=e.dataTransfer.files[0];if(f&&/^image\/(jpeg|png|webp)$/.test(f.type))load(f)};
-async function load(f){original=f;app.classList.remove("hidden");$("#thumb").src=URL.createObjectURL(f);$("#fname").textContent=f.name;$("#finfo").textContent=`${f.type} • ${fmt(f.size)}`;$("#result").classList.add("hidden");$("#meter").style.width="15%";$("#scanState").textContent="Scanning…";let m=await scan(f);$("#meter").style.width="100%";$("#scanState").textContent="Scan complete";render($("#before"),m);$("#count").textContent=m.length}
-function add(m,label,value){m.push({label,value})}
-async function scan(file){
- const m=[],buf=new Uint8Array(await file.slice(0,256*1024).arrayBuffer()),text=new TextDecoder("latin1").decode(buf);
- if(file.type==="image/jpeg"){let p=2;while(p+4<buf.length&&buf[p]===255){let marker=buf[p+1],len=(buf[p+2]<<8)|buf[p+3];if(len<2||p+2+len>buf.length)break;let seg=text.slice(p+4,p+2+len);if(marker===225&&seg.startsWith("Exif"))add(m,"EXIF","Embedded EXIF block");else if(marker===225&&/xmp/i.test(seg))add(m,"XMP","Embedded XMP block");else if(marker===237)add(m,"IPTC / APP13","JPEG application segment");else if(marker>=224&&marker<=239)add(m,`JPEG APP${marker-224}`,"Application segment");p+=2+len}}
- if(file.type==="image/png"){let dv=new DataView(buf.buffer),p=8;while(p+12<=buf.length){let len=dv.getUint32(p);if(p+12+len>buf.length)break;let typ=text.slice(p+4,p+8);if(["tEXt","zTXt","iTXt"].includes(typ))add(m,`PNG ${typ}`,"Embedded text metadata");p+=12+len;if(typ==="IEND")break}}
- [["GPS","GPSLatitude|GPSLongitude|GPSPosition"],["Camera","Make|Model|LensModel|LensMake"],["Date","DateTimeOriginal|CreateDate|DateTimeDigitized"],["Software","Software|CreatorTool|ProcessingSoftware"],["Author","Artist|Author|Creator"],["Copyright","Copyright"],["C2PA / provenance","c2pa|content.credentials|jumbf"]].forEach(([l,p])=>{if(new RegExp(p,"i").test(text))add(m,l,"Metadata marker detected")});
- return [...new Map(m.map(x=>[x.label+"|"+x.value,x])).values()]
+/* ==========================================================================
+   MetaClean Pro — Application Logic
+   1. Privacy Image Cleaner (Strip & rebuild raster via canvas)
+   2. EXIF Photo Editor (Inspect raw EXIF tags & edit metadata in-place)
+   ========================================================================== */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtSize = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB';
+const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+
+// Toast Notification System
+function toast(msg, type = 'ok') {
+  const el = $('#toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'toast ' + type;
+  el.style.display = 'block';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.style.display = 'none'; }, 3400);
 }
-function render(el,m){el.innerHTML=m.length?m.map(x=>`<div class="row"><span>${esc(x.label)}</span><span>${esc(x.value)}</span></div>`).join(""):`<div class="empty">No common metadata detected.</div>`}
-$("#clean").onclick=async()=>{
- if(!original)return;let b=$("#clean");b.disabled=true;b.textContent="Rebuilding…";
- try{let img=new Image();img.src=URL.createObjectURL(original);await img.decode();let c=document.createElement("canvas");c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext("2d").drawImage(img,0,0);let type=original.type==="image/png"?"image/png":"image/jpeg";cleanBlob=await new Promise(r=>c.toBlob(r,type,type==="image/jpeg"?.95:undefined));let after=await scan(new File([cleanBlob],"clean."+ (type==="image/png"?"png":"jpg"),{type}));render($("#after"),after);$("#removed").textContent=$("#count").textContent;$("#remaining").textContent=after.length;$("#resultBadge").textContent=after.length?"Review remaining fields":"Clean";$("#resultBadge").style.color=after.length?"#f2b84b":"#49d39b";$("#result").classList.remove("hidden");$("#result").scrollIntoView({behavior:"smooth",block:"start"})}catch(e){alert("Could not process this image. Try JPEG or PNG.")}finally{b.disabled=false;b.textContent="Clean image"}};
-$("#download").onclick=()=>{if(!cleanBlob)return;let base=original.name.replace(/\.[^.]+$/,"");let ext=original.type==="image/png"?"png":"jpg";let a=document.createElement("a");a.href=URL.createObjectURL(cleanBlob);a.download=base+"-clean."+ext;a.click()};
-$("#reset").onclick=$("#again").onclick=()=>{app.classList.add("hidden");input.value="";original=null;cleanBlob=null;window.scrollTo({top:0,behavior:"smooth"})};
 
 // ============================================================================
-// Cyber Arcade Hub Launcher (29-Game Master Arcade Cabinet)
+// Navigation: Mode Switcher (Cleaner <-> EXIF Editor)
 // ============================================================================
-const arcadeModal = $("#arcadeModal");
-const arcadeIframe = $("#arcadeIframe");
-const arcadeTabLink = $("#arcadeTabLink");
+const tabCleaner = $('#tabCleaner');
+const tabEditor  = $('#tabEditor');
+const cleanerView = $('#cleanerView');
+const editorView  = $('#editorView');
 
-const arcadeGames = [
-  { id: "turbo", btnId: "#tabArcadeTurbo", bannerId: "#arcadeBannerBtn", path: "game/index.html" },
-  { id: "puzzle", btnId: "#tabArcadePuzzle", bannerId: "#arcadePuzzleBtn", path: "puzzle/index.html" },
-  { id: "breaker", btnId: "#tabArcadeBreaker", bannerId: "#arcadeBreakerBtn", path: "breaker/index.html" },
-  { id: "strike", btnId: "#tabArcadeStrike", bannerId: "#arcadeStrikeBtn", path: "strike/index.html" },
-  { id: "snake", btnId: "#tabArcadeSnake", bannerId: "#arcadeSnakeBtn", path: "snake/index.html" },
-  { id: "jump", btnId: "#tabArcadeJump", bannerId: "#arcadeJumpBtn", path: "jump/index.html" },
-  { id: "pulse", btnId: "#tabArcadePulse", bannerId: "#arcadePulseBtn", path: "pulse/index.html" },
-  { id: "runner", btnId: "#tabArcadeRunner", bannerId: "#arcadeRunnerBtn", path: "runner/index.html" },
-  { id: "defense", btnId: "#tabArcadeDefense", bannerId: "#arcadeDefenseBtn", path: "defense/index.html" },
-  { id: "survivor", btnId: "#tabArcadeSurvivor", bannerId: "#arcadeSurvivorBtn", path: "survivor/index.html" },
-  { id: "portal", btnId: "#tabArcadePortal", bannerId: "#arcadePortalBtn", path: "portal/index.html" },
-  { id: "rogue", btnId: "#tabArcadeRogue", bannerId: "#arcadeRogueBtn", path: "rogue/index.html" },
-  { id: "tower", btnId: "#tabArcadeTower", bannerId: "#arcadeTowerBtn", path: "tower/index.html" },
-  { id: "kart", btnId: "#tabArcadeKart", bannerId: "#arcadeKartBtn", path: "kart/index.html" },
-  { id: "match", btnId: "#tabArcadeMatch", bannerId: "#arcadeMatchBtn", path: "match/index.html" },
-  { id: "pinball", btnId: "#tabArcadePinball", bannerId: "#arcadePinballBtn", path: "pinball/index.html" },
-  { id: "shinobi", btnId: "#tabArcadeShinobi", bannerId: "#arcadeShinobiBtn", path: "shinobi/index.html" },
-  { id: "deck", btnId: "#tabArcadeDeck", bannerId: "#arcadeDeckBtn", path: "deck/index.html" },
-  { id: "flight", btnId: "#tabArcadeFlight", bannerId: "#arcadeFlightBtn", path: "flight/index.html" },
-  { id: "billiards", btnId: "#tabArcadeBilliards", bannerId: "#arcadeBilliardsBtn", path: "billiards/index.html" },
-  { id: "tactics", btnId: "#tabArcadeTactics", bannerId: "#arcadeTacticsBtn", path: "tactics/index.html" },
-  { id: "mining", btnId: "#tabArcadeMining", bannerId: "#arcadeMiningBtn", path: "mining/index.html" },
-  { id: "golf", btnId: "#tabArcadeGolf", bannerId: "#arcadeGolfBtn", path: "golf/index.html" },
-  { id: "fighter", btnId: "#tabArcadeFighter", bannerId: "#arcadeFighterBtn", path: "fighter/index.html" },
-  { id: "stealth", btnId: "#tabArcadeStealth", bannerId: "#arcadeStealthBtn", path: "stealth/index.html" },
-  { id: "bomber", btnId: "#tabArcadeBomber", bannerId: "#arcadeBomberBtn", path: "bomber/index.html" },
-  { id: "pacman", btnId: "#tabArcadePacman", bannerId: "#arcadePacmanBtn", path: "pacman/index.html" },
-  { id: "tycoon", btnId: "#tabArcadeTycoon", bannerId: "#arcadeTycoonBtn", path: "tycoon/index.html" },
-  { id: "tetris", btnId: "#tabArcadeTetris", bannerId: "#arcadeTetrisBtn", path: "tetris/index.html" }
-];
+function switchMode(mode) {
+  if (mode === 'editor') {
+    tabCleaner.classList.remove('active');
+    tabEditor.classList.add('active');
+    cleanerView.classList.add('hidden');
+    editorView.classList.remove('hidden');
+  } else {
+    tabCleaner.classList.add('active');
+    tabEditor.classList.remove('active');
+    cleanerView.classList.remove('hidden');
+    editorView.classList.add('hidden');
+  }
+}
 
-function switchGame(url) {
-  const cleanUrl = url.split("?")[0];
-  const cacheBusted = cleanUrl + "?t=" + Date.now();
-  if (arcadeIframe) arcadeIframe.src = cacheBusted;
-  if (arcadeTabLink) arcadeTabLink.href = cleanUrl;
+if (tabCleaner) tabCleaner.onclick = () => switchMode('cleaner');
+if (tabEditor)  tabEditor.onclick  = () => switchMode('editor');
 
-  const targetFolder = cleanUrl.split("/")[0];
-  arcadeGames.forEach(g => {
-    const tabEl = $(g.btnId);
-    if (tabEl) {
-      const match = g.path.startsWith(targetFolder);
-      tabEl.classList.toggle("active", match);
-      if (match && typeof tabEl.scrollIntoView === 'function') {
-        tabEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-      }
+// ============================================================================
+// PART 1: QUICK CLEANER LOGIC
+// ============================================================================
+const cleanerInput = $('#file');
+const cleanerDrop  = $('#drop');
+const cleanerApp   = $('#app');
+let cleanerOriginal = null;
+let cleanerCleanBlob = null;
+
+if (cleanerInput) {
+  cleanerInput.onchange = () => cleanerInput.files[0] && loadCleaner(cleanerInput.files[0]);
+}
+
+if (cleanerDrop) {
+  ['dragenter', 'dragover'].forEach(e => cleanerDrop.addEventListener(e, x => {
+    x.preventDefault();
+    cleanerDrop.classList.add('drag');
+  }));
+  ['dragleave', 'drop'].forEach(e => cleanerDrop.addEventListener(e, x => {
+    x.preventDefault();
+    cleanerDrop.classList.remove('drag');
+  }));
+  cleanerDrop.ondrop = e => {
+    const f = e.dataTransfer.files[0];
+    if (f && /^image\/(jpeg|png|webp)$/i.test(f.type)) loadCleaner(f);
+  };
+}
+
+async function loadCleaner(file) {
+  cleanerOriginal = file;
+  cleanerApp.classList.remove('hidden');
+  $('#thumb').src = URL.createObjectURL(file);
+  $('#fname').textContent = file.name;
+  $('#finfo').textContent = `${file.type || 'image'} • ${fmtSize(file.size)}`;
+
+  // Offer shortcut to EXIF Editor if JPEG
+  const editBtn = $('#btnOpenInEditor');
+  if (editBtn) {
+    if (file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name)) {
+      editBtn.style.display = 'inline-block';
+      editBtn.onclick = () => {
+        switchMode('editor');
+        loadExifFile(file);
+      };
+    } else {
+      editBtn.style.display = 'none';
     }
+  }
+
+  $('#result').classList.add('hidden');
+  $('#meter').style.width = '15%';
+  $('#scanState').textContent = 'Scanning…';
+  const m = await scanCleaner(file);
+  $('#meter').style.width = '100%';
+  $('#scanState').textContent = 'Scan complete';
+  renderCleanerList($('#before'), m);
+  $('#count').textContent = m.length;
+}
+
+function addCleanerItem(m, label, value) {
+  m.push({ label, value });
+}
+
+async function scanCleaner(file) {
+  const m = [];
+  const buf = new Uint8Array(await file.slice(0, 256 * 1024).arrayBuffer());
+  const text = new TextDecoder('latin1').decode(buf);
+
+  if (file.type === 'image/jpeg' || /\.jpe?g$/i.test(file.name)) {
+    let p = 2;
+    while (p + 4 < buf.length && buf[p] === 255) {
+      let marker = buf[p + 1];
+      let len = (buf[p + 2] << 8) | buf[p + 3];
+      if (len < 2 || p + 2 + len > buf.length) break;
+      let seg = text.slice(p + 4, p + 2 + len);
+      if (marker === 225 && seg.startsWith('Exif')) {
+        addCleanerItem(m, 'EXIF', 'Embedded EXIF metadata segment');
+      } else if (marker === 225 && /xmp/i.test(seg)) {
+        addCleanerItem(m, 'XMP', 'Embedded XMP metadata block');
+      } else if (marker === 237) {
+        addCleanerItem(m, 'IPTC / APP13', 'JPEG application segment (IPTC/Photoshop)');
+      } else if (marker >= 224 && marker <= 239) {
+        addCleanerItem(m, `JPEG APP${marker - 224}`, 'Application segment');
+      }
+      p += 2 + len;
+    }
+  }
+
+  if (file.type === 'image/png' || /\.png$/i.test(file.name)) {
+    let dv = new DataView(buf.buffer);
+    let p = 8;
+    while (p + 12 <= buf.length) {
+      let len = dv.getUint32(p);
+      if (p + 12 + len > buf.length) break;
+      let typ = text.slice(p + 4, p + 8);
+      if (['tEXt', 'zTXt', 'iTXt'].includes(typ)) {
+        addCleanerItem(m, `PNG ${typ}`, 'Embedded text chunk');
+      }
+      p += 12 + len;
+      if (typ === 'IEND') break;
+    }
+  }
+
+  [
+    ['GPS', 'GPSLatitude|GPSLongitude|GPSPosition|GPSAltitude'],
+    ['Camera', 'Make|Model|LensModel|LensMake'],
+    ['Date', 'DateTimeOriginal|CreateDate|DateTimeDigitized'],
+    ['Software', 'Software|CreatorTool|ProcessingSoftware'],
+    ['Author', 'Artist|Author|Creator'],
+    ['Copyright', 'Copyright'],
+    ['C2PA / Provenance', 'c2pa|content\.credentials|jumbf']
+  ].forEach(([lbl, pat]) => {
+    if (new RegExp(pat, 'i').test(text)) {
+      addCleanerItem(m, lbl, 'Metadata marker detected');
+    }
+  });
+
+  return [...new Map(m.map(x => [x.label + '|' + x.value, x])).values()];
+}
+
+function renderCleanerList(el, m) {
+  el.innerHTML = m.length
+    ? m.map(x => `<div class="row"><span>${esc(x.label)}</span><span>${esc(x.value)}</span></div>`).join('')
+    : `<div class="empty">No common metadata detected.</div>`;
+}
+
+const cleanBtn = $('#clean');
+if (cleanBtn) {
+  cleanBtn.onclick = async () => {
+    if (!cleanerOriginal) return;
+    cleanBtn.disabled = true;
+    cleanBtn.textContent = 'Rebuilding…';
+    try {
+      const img = new Image();
+      img.src = URL.createObjectURL(cleanerOriginal);
+      await img.decode();
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+
+      const type = cleanerOriginal.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      cleanerCleanBlob = await new Promise(r => c.toBlob(r, type, type === 'image/jpeg' ? 0.95 : undefined));
+
+      const after = await scanCleaner(new File([cleanerCleanBlob], 'clean.' + (type === 'image/png' ? 'png' : 'jpg'), { type }));
+      renderCleanerList($('#after'), after);
+      $('#removed').textContent = $('#count').textContent;
+      $('#remaining').textContent = after.length;
+      $('#resultBadge').textContent = after.length ? 'Review remaining fields' : 'Clean';
+      $('#resultBadge').style.color = after.length ? '#f2b84b' : '#49d39b';
+      $('#result').classList.remove('hidden');
+      $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      toast('✅ Cleaned raster image generated', 'ok');
+    } catch (e) {
+      console.error(e);
+      toast('Could not process this image. Try JPEG or PNG.', 'err');
+    } finally {
+      cleanBtn.disabled = false;
+      cleanBtn.textContent = 'Clean image';
+    }
+  };
+}
+
+const dlCleanBtn = $('#download');
+if (dlCleanBtn) {
+  dlCleanBtn.onclick = () => {
+    if (!cleanerCleanBlob || !cleanerOriginal) return;
+    const base = cleanerOriginal.name.replace(/\.[^.]+$/, '');
+    const ext = cleanerOriginal.type === 'image/png' ? 'png' : 'jpg';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(cleanerCleanBlob);
+    a.download = base + '-clean.' + ext;
+    a.click();
+    toast('💾 Cleaned image downloaded', 'ok');
+  };
+}
+
+const resetCleaner = () => {
+  cleanerApp.classList.add('hidden');
+  if (cleanerInput) cleanerInput.value = '';
+  cleanerOriginal = null;
+  cleanerCleanBlob = null;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+if ($('#reset')) $('#reset').onclick = resetCleaner;
+if ($('#again')) $('#again').onclick = resetCleaner;
+
+// ============================================================================
+// PART 2: EXIF PHOTO EDITOR ENGINE
+// ============================================================================
+let _bin = '';
+let _name = '';
+let _exif = null;
+
+// Date Conversions
+function exifToHTML(s) {
+  if (!s || typeof s !== 'string') return '';
+  try {
+    const [d, t = '00:00:00'] = s.split(' ');
+    return d.replace(/:/g, '-') + 'T' + t.slice(0, 5);
+  } catch { return ''; }
+}
+
+function htmlToExif(s) {
+  if (!s) return '';
+  const [d, t = '00:00'] = s.split('T');
+  return d.replace(/-/g, ':') + ' ' + t + ':00';
+}
+
+// GPS Conversions
+function dmsToDec(dms, ref) {
+  if (!Array.isArray(dms) || dms.length < 3) return '';
+  try {
+    const r = a => a[0] / a[1];
+    let v = r(dms[0]) + r(dms[1]) / 60 + r(dms[2]) / 3600;
+    if (ref === 'S' || ref === 'W') v = -v;
+    return v.toFixed(6);
+  } catch { return ''; }
+}
+
+function decToDMS(deg) {
+  const abs = Math.abs(deg);
+  const d = Math.floor(abs);
+  const mf = (abs - d) * 60;
+  const m = Math.floor(mf);
+  const s = Math.round((mf - m) * 60 * 100);
+  return [[d, 1], [m, 1], [s, 100]];
+}
+
+function rat(val, denom = 1000) {
+  return [Math.round(val * denom), denom];
+}
+
+// File Loading & Drag-and-Drop for EXIF Editor
+const exifDropZone = $('#exifDropZone');
+const exifFileIn   = $('#exifFileIn');
+
+if (exifDropZone) {
+  exifDropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    exifDropZone.classList.add('on');
+  });
+  exifDropZone.addEventListener('dragleave', () => exifDropZone.classList.remove('on'));
+  exifDropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    exifDropZone.classList.remove('on');
+    if (e.dataTransfer.files[0]) loadExifFile(e.dataTransfer.files[0]);
   });
 }
 
-function openArcade(gameUrl = "game/index.html") {
-  if (!arcadeModal) return;
-  arcadeModal.classList.remove("hidden");
-  switchGame(gameUrl);
-  document.body.style.overflow = "hidden";
+if (exifFileIn) {
+  exifFileIn.addEventListener('change', e => {
+    if (e.target.files[0]) loadExifFile(e.target.files[0]);
+  });
 }
 
-function closeArcade() {
-  if (!arcadeModal) return;
-  arcadeModal.classList.add("hidden");
-  if (arcadeIframe) {
-    arcadeIframe.src = "about:blank";
+function loadExifFile(file) {
+  if (!/jpe?g/i.test(file.type) && !/\.jpe?g$/i.test(file.name)) {
+    toast('⚠ Only JPEG / JPG photos are supported in the EXIF Editor', 'err');
+    return;
   }
-  document.body.style.overflow = "";
+  _name = file.name;
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const dataURL = ev.target.result;
+    $('#previewImg').src = dataURL;
+    $('#exifFname').textContent = file.name;
+    $('#exifFinfo').textContent = `${file.type || 'image/jpeg'} • ${fmtSize(file.size)}`;
+    $('#fileInfo').textContent = `${file.name} · ${fmtSize(file.size)}`;
+
+    try {
+      _bin = atob(dataURL.split(',')[1]);
+    } catch {
+      toast('Could not decode the photo binary', 'err');
+      return;
+    }
+
+    try {
+      if (typeof piexif === 'undefined') {
+        throw new Error('piexif library not loaded');
+      }
+      _exif = piexif.load(_bin);
+    } catch (err) {
+      _exif = { '0th': {}, 'Exif': {}, 'GPS': {}, '1st': {} };
+      toast('No existing EXIF tags found — ready to add new metadata', 'inf');
+    }
+
+    fillExifForm();
+    renderRawExif();
+
+    exifDropZone.classList.add('hidden');
+    $('#exifWorkspace').classList.remove('hidden');
+    window.scrollTo({ top: $('#exifWorkspace').offsetTop - 20, behavior: 'smooth' });
+  };
+  reader.readAsDataURL(file);
 }
 
-// Bind tabs and banner buttons
-arcadeGames.forEach(g => {
-  const tabBtn = $(g.btnId);
-  if (tabBtn) tabBtn.onclick = () => switchGame(g.path);
+// Populate Form from _exif
+function fillExifForm() {
+  if (typeof piexif === 'undefined' || !_exif) return;
+  const I = piexif.ImageIFD;
+  const E = piexif.ExifIFD;
+  const G = piexif.GPSIFD;
 
-  const bannerBtn = $(g.bannerId);
-  if (bannerBtn) bannerBtn.onclick = () => openArcade(g.path);
-});
+  const z0 = _exif['0th'] || {};
+  const ze = _exif['Exif'] || {};
+  const gp = _exif['GPS'] || {};
 
-// Header Button
-const openBtn = $("#openArcadeBtn");
-if (openBtn) openBtn.onclick = () => openArcade("game/index.html");
+  setVal('f_dto', exifToHTML(ze[E.DateTimeOriginal]));
+  setVal('f_dt',  exifToHTML(z0[I.DateTime]));
+  setVal('f_dtd', exifToHTML(ze[E.DateTimeDigitized]));
 
-const closeBtn = $("#closeArcadeBtn");
-if (closeBtn) closeBtn.onclick = closeArcade;
+  setVal('f_make',  z0[I.Make]);
+  setVal('f_model', z0[I.Model]);
+  setVal('f_soft',  z0[I.Software]);
+  setVal('f_iso',   ze[E.ISOSpeedRatings]);
 
-const backdrop = $("#arcadeBackdrop");
-if (backdrop) backdrop.onclick = closeArcade;
+  setVal('f_lat', gp[G.GPSLatitude]  ? dmsToDec(gp[G.GPSLatitude],  gp[G.GPSLatitudeRef])  : '');
+  setVal('f_lng', gp[G.GPSLongitude] ? dmsToDec(gp[G.GPSLongitude], gp[G.GPSLongitudeRef]) : '');
+  setVal('f_alt', gp[G.GPSAltitude]  ? (gp[G.GPSAltitude][0] / gp[G.GPSAltitude][1]).toFixed(1) : '');
 
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && arcadeModal && !arcadeModal.classList.contains("hidden")) {
-    closeArcade();
+  setVal('f_desc',   z0[I.ImageDescription]);
+  setVal('f_artist', z0[I.Artist]);
+  setVal('f_copy',   z0[I.Copyright]);
+}
+
+// Render Raw EXIF Tags Inspector
+function renderRawExif() {
+  if (typeof piexif === 'undefined' || !_exif) return;
+  const I = piexif.ImageIFD;
+  const E = piexif.ExifIFD;
+
+  const N0 = {
+    [I.Make]: 'Make',
+    [I.Model]: 'Model',
+    [I.DateTime]: 'DateTime',
+    [I.Software]: 'Software',
+    [I.Artist]: 'Artist',
+    [I.Copyright]: 'Copyright',
+    [I.ImageDescription]: 'Description',
+    [I.Orientation]: 'Orientation',
+    [I.XResolution]: 'XResolution',
+    [I.YResolution]: 'YResolution',
+    [I.ResolutionUnit]: 'ResolutionUnit'
+  };
+
+  const NE = {
+    [E.DateTimeOriginal]: 'DateTimeOriginal',
+    [E.DateTimeDigitized]: 'DateTimeDigitized',
+    [E.ISOSpeedRatings]: 'ISO',
+    [E.FNumber]: 'FNumber',
+    [E.ExposureTime]: 'ExposureTime',
+    [E.FocalLength]: 'FocalLength',
+    [E.Flash]: 'Flash',
+    [E.LensModel]: 'LensModel',
+    [E.LensMake]: 'LensMake',
+    [E.PixelXDimension]: 'Width',
+    [E.PixelYDimension]: 'Height',
+    [E.ColorSpace]: 'ColorSpace',
+    [E.WhiteBalance]: 'WhiteBalance',
+    [E.ExposureMode]: 'ExposureMode',
+    [E.SceneCaptureType]: 'SceneType'
+  };
+
+  const fmt = v => typeof v === 'string'
+    ? v.replace(/ /g, '').replace(/^\s+|\s+$/g, '')
+    : JSON.stringify(v);
+
+  const rows = [];
+  let tagCount = 0;
+
+  for (const [k, v] of Object.entries(_exif['0th'] || {})) {
+    tagCount++;
+    const lbl = N0[k] ?? `IFD0[${k}]`;
+    rows.push(`<div><span class="t0">${esc(lbl)}</span>: <span class="tv">${esc(fmt(v))}</span></div>`);
   }
-});
+  for (const [k, v] of Object.entries(_exif['Exif'] || {})) {
+    tagCount++;
+    const lbl = NE[k] ?? `Exif[${k}]`;
+    rows.push(`<div><span class="te">${esc(lbl)}</span>: <span class="tv">${esc(fmt(v))}</span></div>`);
+  }
+  const gKeys = Object.keys(_exif['GPS'] || {});
+  if (gKeys.length) {
+    tagCount += gKeys.length;
+    rows.push(`<div><span class="tg">GPS</span>: <span class="tv">${gKeys.length} field(s) present</span></div>`);
+  }
+
+  const rawEl = $('#rawExif');
+  if (rawEl) {
+    rawEl.innerHTML = rows.length
+      ? rows.join('')
+      : '<span style="color:var(--muted)">No EXIF tags present in this image</span>';
+  }
+  const badgeEl = $('#rawExifBadge');
+  if (badgeEl) badgeEl.textContent = `${tagCount} tag${tagCount === 1 ? '' : 's'}`;
+}
+
+// Synchronize Form Values -> _exif Object
+function applyExifForm() {
+  if (typeof piexif === 'undefined' || !_exif) return;
+  const I = piexif.ImageIFD;
+  const E = piexif.ExifIFD;
+  const G = piexif.GPSIFD;
+
+  ['0th', 'Exif', 'GPS', '1st'].forEach(k => { if (!_exif[k]) _exif[k] = {}; });
+
+  const put = (ifd, tag, val) => {
+    if (val !== null && val !== '' && val !== undefined) _exif[ifd][tag] = val;
+    else delete _exif[ifd][tag];
+  };
+
+  // Dates
+  put('Exif', E.DateTimeOriginal,  htmlToExif($('#f_dto').value));
+  put('0th',  I.DateTime,          htmlToExif($('#f_dt').value));
+  put('Exif', E.DateTimeDigitized, htmlToExif($('#f_dtd').value));
+
+  // Camera
+  put('0th', I.Make,     $('#f_make').value.trim()  || null);
+  put('0th', I.Model,    $('#f_model').value.trim() || null);
+  put('0th', I.Software, $('#f_soft').value.trim()  || null);
+  const iso = parseInt($('#f_iso').value);
+  if (!isNaN(iso) && iso > 0) _exif['Exif'][E.ISOSpeedRatings] = iso;
+  else delete _exif['Exif'][E.ISOSpeedRatings];
+
+  // GPS
+  const latRaw = $('#f_lat').value;
+  const lngRaw = $('#f_lng').value;
+  const altRaw = $('#f_alt').value;
+
+  if (latRaw !== '' && lngRaw !== '') {
+    const lat = parseFloat(latRaw);
+    const lng = parseFloat(lngRaw);
+    _exif['GPS'][G.GPSLatitude]     = decToDMS(lat);
+    _exif['GPS'][G.GPSLatitudeRef]  = lat >= 0 ? 'N' : 'S';
+    _exif['GPS'][G.GPSLongitude]    = decToDMS(lng);
+    _exif['GPS'][G.GPSLongitudeRef] = lng >= 0 ? 'E' : 'W';
+  } else {
+    [G.GPSLatitude, G.GPSLatitudeRef, G.GPSLongitude, G.GPSLongitudeRef].forEach(t => delete _exif['GPS'][t]);
+  }
+
+  if (altRaw !== '') {
+    const alt = parseFloat(altRaw);
+    _exif['GPS'][G.GPSAltitude]    = rat(Math.abs(alt));
+    _exif['GPS'][G.GPSAltitudeRef] = alt < 0 ? 1 : 0;
+  } else {
+    [G.GPSAltitude, G.GPSAltitudeRef].forEach(t => delete _exif['GPS'][t]);
+  }
+
+  // Attribution
+  put('0th', I.ImageDescription, $('#f_desc').value.trim()   || null);
+  put('0th', I.Artist,           $('#f_artist').value.trim() || null);
+  put('0th', I.Copyright,        $('#f_copy').value.trim()   || null);
+}
+
+// Download Helper via Blob URL
+function downloadBin(bin, suffix) {
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], { type: 'image/jpeg' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = _name.replace(/(\.[^.]+)$/, `${suffix}$1`);
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+// EXIF Actions
+function saveExif() {
+  try {
+    if (typeof piexif === 'undefined') throw new Error('piexif library not ready');
+    applyExifForm();
+    const exifBytes = piexif.dump(_exif);
+    const newBin = piexif.insert(exifBytes, _bin);
+    downloadBin(newBin, '_edited');
+    _bin = newBin;
+    renderRawExif();
+    toast('✅ Downloaded with updated EXIF tags', 'ok');
+  } catch (err) {
+    console.error(err);
+    toast('Error saving EXIF: ' + err.message, 'err');
+  }
+}
+
+function stripExif() {
+  try {
+    if (typeof piexif === 'undefined') throw new Error('piexif library not ready');
+    _exif = { '0th': {}, 'Exif': {}, 'GPS': {}, '1st': {} };
+    const exifBytes = piexif.dump(_exif);
+    const newBin = piexif.insert(exifBytes, _bin);
+    downloadBin(newBin, '_stripped');
+    _bin = newBin;
+    fillExifForm();
+    renderRawExif();
+    toast('🗑️ All EXIF stripped — file downloaded', 'ok');
+  } catch (err) {
+    console.error(err);
+    toast('Error stripping EXIF: ' + err.message, 'err');
+  }
+}
+
+function resetExifTool() {
+  _bin = '';
+  _name = '';
+  _exif = null;
+  if (exifFileIn) exifFileIn.value = '';
+  $('#exifWorkspace').classList.add('hidden');
+  exifDropZone.classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Wire EXIF Action Buttons
+if ($('#btnSaveExif'))      $('#btnSaveExif').onclick      = saveExif;
+if ($('#btnStripExif'))     $('#btnStripExif').onclick     = stripExif;
+if ($('#btnResetExif'))     $('#btnResetExif').onclick     = resetExifTool;
+if ($('#btnTopResetExif'))  $('#btnTopResetExif').onclick  = resetExifTool;
