@@ -29,6 +29,92 @@
         return 'game';
     }
 
+    // Auto-fit screen when embedded in an iframe inside the portal
+    if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        function applyEmbeddedStyles() {
+            if (typeof document === 'undefined') return;
+            document.documentElement.classList.add('cgz-embedded');
+            let style = document.getElementById('cgz-bridge-fit-style');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'cgz-bridge-fit-style';
+                (document.head || document.documentElement).appendChild(style);
+            }
+            style.textContent = `
+                html, body {
+                    width: 100% !important;
+                    height: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: #05070a !important;
+                }
+                header, .logo, .header-actions, .portal-header, 
+                .instructions-card, .instructions-panel, .instructions-container,
+                .btn-back-hub, a[href*="index.html"] {
+                    display: none !important;
+                }
+                #game-container, .game-container, main, .game-wrapper, #main-container {
+                    width: 100% !important;
+                    height: 100% !important;
+                    max-width: 100% !important;
+                    max-height: 100% !important;
+                    margin: 0 !important;
+                    padding: 2px !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    overflow: hidden !important;
+                    box-shadow: none !important;
+                    border: none !important;
+                    background: transparent !important;
+                }
+                .canvas-container {
+                    width: 100% !important;
+                    height: 100% !important;
+                    max-height: 100% !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                }
+                canvas, #gameCanvas, .game-canvas, #runnerCanvas, #flightCanvas, 
+                #breakerCanvas, #strikeCanvas, #defenseCanvas, #jumpCanvas, 
+                #pulseCanvas, #rogueCanvas, #snakeCanvas, #survivorCanvas, 
+                #towerCanvas, #portalCanvas {
+                    max-width: 100% !important;
+                    max-height: calc(100vh - 6px) !important;
+                    width: auto !important;
+                    height: auto !important;
+                    object-fit: contain !important;
+                    box-shadow: none !important;
+                }
+                .touch-controls, .controls-bar, .d-pad, .action-pad {
+                    max-height: 95px !important;
+                    flex-shrink: 0 !important;
+                    margin-top: 2px !important;
+                    padding: 2px !important;
+                }
+                body:has(.touch-controls) canvas,
+                body:has(.controls-bar) canvas {
+                    max-height: calc(100vh - 105px) !important;
+                }
+            `;
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyEmbeddedStyles);
+        } else {
+            applyEmbeddedStyles();
+        }
+    }
+
     const CGZBridge = {
         version: '2.0.0',
         gameId: detectGameId(),
